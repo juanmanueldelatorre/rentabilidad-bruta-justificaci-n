@@ -1,0 +1,2402 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>SEGRUP | Margen Bruto Mensual por Cliente</title>
+<style>
+  :root{
+    --bg:#f3f5f8; --card:#ffffff; --line:#d9e1ea; --text:#162338; --muted:#6c7a90;
+    --primary:#1f4e79; --primary2:#2f6fa2; --good:#1f9d55; --bad:#d64545; --warn:#d9822b;
+    --soft:#eef3f8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Calibri,Candara,'Segoe UI',Arial,sans-serif;color:var(--text)}
+  .wrap{max-width:1680px;margin:0 auto;padding:22px}
+  .top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}
+  h1{margin:0;font-size:30px;line-height:1.1}
+  .sub{margin-top:7px;color:var(--muted);font-size:14px;max-width:1050px;line-height:1.45}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  button{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(16,24,40,.04)}
+  .label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:800}
+  .value{font-size:28px;font-weight:800;margin-top:8px}
+  .note{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4}
+  .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .section-title h2{margin:0;font-size:17px}
+  .pill{padding:5px 10px;border-radius:999px;background:var(--soft);font-size:12px;border:1px solid var(--line);color:var(--muted)}
+  .layout2{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:14px}
+  .layout3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  select,input{border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;background:#fff;min-width:240px}
+  .chartbox{height:360px;border:1px dashed var(--line);border-radius:14px;background:linear-gradient(180deg,#fbfcfd,#f7f9fb);overflow:hidden}
+  svg{width:100%;height:100%;display:block}
+  .mini-insight{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .mini{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .mini .t{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:800}
+  .mini .v{font-size:24px;font-weight:800;margin-top:8px}
+  .mini .s{font-size:12px;color:var(--muted);margin-top:4px}
+  .insight{padding:12px;border-left:4px solid var(--primary);background:#f8fafc;border-radius:8px;margin:8px 0;font-size:13px;line-height:1.45}
+  .ranking-item{padding:8px 0;border-bottom:1px solid #edf1f5}
+  .muted{color:var(--muted)}
+  .heatmap-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin-top:10px;max-height:740px}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+  thead th{position:sticky;top:0;background:#f8fafc;z-index:3;border-bottom:1px solid var(--line)}
+  th,td{padding:9px 8px;border-right:1px solid #edf1f5;border-bottom:1px solid #edf1f5;text-align:center;white-space:nowrap}
+  th:first-child, td:first-child{position:sticky;left:0;background:#fff;z-index:2;text-align:left;font-weight:700;min-width:320px}
+  thead th:first-child{z-index:4;background:#f8fafc}
+  .cell{font-weight:700;border-radius:6px;display:inline-block;padding:5px 6px;min-width:58px}
+  .foot{font-size:11px;color:var(--muted);margin-top:12px}
+  @media(max-width:1200px){ .grid4{grid-template-columns:repeat(2,1fr)} .layout2,.layout3{grid-template-columns:1fr} }
+  @media(max-width:700px){ .grid4{grid-template-columns:1fr} .wrap{padding:14px} th:first-child,td:first-child{min-width:240px} }
+  @media print { body{background:#fff} .wrap{max-width:none;padding:0} button{display:none} .card{box-shadow:none} }
+
+  .top{margin-bottom:10px}
+  .top .sub{max-width:1150px}
+  #clientSelect{min-width:420px}
+  @media(max-width:700px){#clientSelect{min-width:100%;width:100%}}
+
+  .chart-tooltip{
+    position:fixed;
+    display:none;
+    pointer-events:none;
+    z-index:9999;
+    background:#162338;
+    color:#fff;
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
+    white-space:nowrap;
+  }
+  .chart-tooltip .tt-month{
+    opacity:.75;
+    font-size:11px;
+    font-weight:600;
+    margin-bottom:2px;
+  }
+
+
+  #portfolioSvg{width:100%}
+  .portfolio-focus{width:100%}
+
+  body{
+    background:linear-gradient(180deg,#eef4fb 0%, #f6f9fc 100%);
+    color:#1d2a3b;
+  }
+  h1{color:#1b2b44; letter-spacing:.2px}
+  .sub{color:#5e718d}
+  .card{
+    border:1px solid #d7e3f0 !important;
+    border-radius:16px !important;
+    box-shadow:0 8px 24px rgba(27,43,68,.06) !important;
+    background:#ffffff !important;
+  }
+  .card:hover{
+    box-shadow:0 10px 28px rgba(27,43,68,.09) !important;
+    transition:.2s ease;
+  }
+
+  /* KPI cards */
+  .grid4 .card:nth-child(1){background:linear-gradient(180deg,#ffffff 0%,#f6fbff 100%) !important; border-top:5px solid #2f80ed !important;}
+  .grid4 .card:nth-child(2){background:linear-gradient(180deg,#ffffff 0%,#f8fbf6 100%) !important; border-top:5px solid #27ae60 !important;}
+  .grid4 .card:nth-child(3){background:linear-gradient(180deg,#ffffff 0%,#fffaf4 100%) !important; border-top:5px solid #f2994a !important;}
+  .grid4 .card:nth-child(4){background:linear-gradient(180deg,#ffffff 0%,#fff6f6 100%) !important; border-top:5px solid #eb5757 !important;}
+
+  .label{
+    color:#6d7f97 !important;
+    font-size:12px !important;
+    letter-spacing:.05em !important;
+  }
+  .value{
+    color:#16253a !important;
+    font-weight:800 !important;
+  }
+  .note,.foot,.muted{color:#6f829c !important}
+
+  .section-title{
+    padding-bottom:8px;
+    border-bottom:1px solid #e7eff8;
+    margin-bottom:14px !important;
+  }
+  .section-title h2{
+    color:#20324d !important;
+    font-weight:800 !important;
+  }
+
+  .pill{
+    background:#edf5ff !important;
+    border:1px solid #cfe1f7 !important;
+    color:#55739a !important;
+    font-weight:700 !important;
+  }
+
+  button{
+    background:#ffffff !important;
+    border:1px solid #cfe1f7 !important;
+    color:#23406a !important;
+    font-weight:700 !important;
+  }
+  button:hover{
+    background:#f3f8ff !important;
+  }
+
+  select,input{
+    border:1px solid #cfe1f7 !important;
+    background:#fbfdff !important;
+    color:#22324d !important;
+    border-radius:12px !important;
+  }
+
+  .chartbox{
+    background:
+      linear-gradient(180deg,#ffffff 0%,#fbfdff 100%) !important;
+    border:1px solid #dce8f5 !important;
+    border-radius:16px !important;
+  }
+
+  .mini{
+    border:1px solid #dbe8f5 !important;
+    background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%) !important;
+  }
+  .mini .t{color:#69809d !important}
+  .mini .v{color:#1d3557 !important}
+  .mini .s{color:#6f829c !important}
+
+  .insight{
+    background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 100%) !important;
+    border-left:5px solid #3b82f6 !important;
+    color:#21314c !important;
+  }
+
+  .heatmap-wrap{
+    border:1px solid #d7e5f3 !important;
+    border-radius:16px !important;
+    background:#fff !important;
+  }
+  thead th{
+    background:#eef5fc !important;
+    color:#385276 !important;
+    font-weight:800 !important;
+  }
+  thead th:first-child{
+    background:#e7f0fb !important;
+  }
+  tbody tr:nth-child(even) td{
+    background:#fcfdff;
+  }
+  td:first-child{
+    background:#f8fbff !important;
+    color:#243552 !important;
+  }
+  th,td{
+    border-right:1px solid #e7eff8 !important;
+    border-bottom:1px solid #e7eff8 !important;
+  }
+  .cell{
+    min-width:62px !important;
+    border:1px solid rgba(0,0,0,.04);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+
+  .ranking-item{
+    padding:10px 0 !important;
+    border-bottom:1px solid #e7eff8 !important;
+  }
+  #variationRanking > div > div:first-child .ranking-item b{color:#15803d}
+  #variationRanking > div > div:last-child .ranking-item b{color:#c24141}
+
+  .chart-tooltip{
+    background:#173a63 !important;
+    border:1px solid rgba(255,255,255,.15);
+  }
+
+
+  .small-multiples-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+  .sm-card{
+    border:1px solid #dbe8f5;
+    border-radius:14px;
+    padding:12px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    min-height:190px;
+  }
+  .sm-card.sm-down{border-top:4px solid #e45d5d}
+  .sm-card.sm-up{border-top:4px solid #2ea96b}
+  .sm-card.sm-flat{border-top:4px solid #7c91aa}
+  .sm-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .sm-name{
+    font-weight:800;
+    font-size:13px;
+    color:#213653;
+    line-height:1.2;
+    min-height:31px;
+  }
+  .sm-delta{
+    font-size:12px;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  .sm-delta.up{color:#188653}
+  .sm-delta.down{color:#c94848}
+  .sm-delta.flat{color:#697f98}
+  .sm-svg{
+    width:100%;
+    height:118px;
+    display:block;
+  }
+  .sm-footer{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    font-size:11px;
+    color:#6f829c;
+    margin-top:4px;
+  }
+  @media(max-width:1150px){.small-multiples-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:700px){.small-multiples-grid{grid-template-columns:1fr}}
+
+  .legend-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px 14px;
+    margin-top:8px;
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    color:#24405d;
+    line-height:1.25;
+  }
+  .legend-swatch{
+    width:14px;
+    height:3px;
+    border-radius:999px;
+    flex:0 0 14px;
+  }
+  @media(max-width:1100px){.legend-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:700px){.legend-grid{grid-template-columns:1fr}}
+
+  .trend-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .trend-btn{
+    border:1px solid #cfddea !important;
+    background:#fff !important;
+    color:#46627f !important;
+    padding:8px 12px !important;
+    border-radius:999px !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+  }
+  .trend-btn.active{
+    background:#1f4e79 !important;
+    border-color:#1f4e79 !important;
+    color:#fff !important;
+  }
+  .trend-key{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-left:auto;
+    font-size:12px;
+    color:#60738c;
+    font-weight:700;
+  }
+  .trend-key-item{display:inline-flex;align-items:center;gap:5px}
+  .key-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .key-dot.up{background:#24945d}
+  .key-dot.down{background:#d95454}
+  .key-dot.flat{background:#718398}
+  @media(max-width:760px){.trend-key{width:100%;margin-left:0}}
+
+  .trend-summary{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .summary-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:800;
+    border:1px solid #dbe6f1;
+    background:#fff;
+  }
+  .summary-chip.down{color:#b93f3f;background:#fff4f4;border-color:#f1caca}
+  .summary-chip.up{color:#187a4b;background:#effaf4;border-color:#c8ead7}
+  .summary-chip.flat{color:#63788f;background:#f5f7fa;border-color:#dce4ec}
+  .delta-chart-wrap{
+    height:1000px;
+    border:1px solid #dce8f5;
+    border-radius:16px;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
+    overflow:hidden;
+  }
+  #deltaOverviewSvg{width:100%;height:100%;display:block}
+
+  .heatmap-wrap{
+    overflow:auto;
+    border:1px solid #d7e5f3 !important;
+    border-radius:16px !important;
+    background:#fff !important;
+    max-height:740px;
+  }
+  #heatmapTable{
+    border-collapse:separate;
+    border-spacing:0;
+    width:100%;
+    font-size:12px;
+  }
+  #heatmapTable thead th{
+    position:sticky;
+    top:0;
+    background:#eef5fc !important;
+    z-index:3;
+    border-bottom:1px solid #dbe6f1;
+    color:#385276 !important;
+    font-weight:800 !important;
+  }
+  #heatmapTable th,#heatmapTable td{
+    padding:9px 8px;
+    border-right:1px solid #e7eff8 !important;
+    border-bottom:1px solid #e7eff8 !important;
+    text-align:center;
+    white-space:nowrap;
+  }
+  #heatmapTable th:first-child,#heatmapTable td:first-child{
+    position:sticky;
+    left:0;
+    z-index:2;
+    background:#f8fbff !important;
+    text-align:left;
+    min-width:340px;
+    font-weight:700;
+    color:#243552 !important;
+  }
+  #heatmapTable thead th:first-child{
+    z-index:4;
+    background:#e7f0fb !important;
+  }
+  #heatmapTable tbody tr:nth-child(even) td{
+    background:#fcfdff;
+  }
+
+  html{scroll-behavior:smooth}
+  .inicio-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+  .inicio-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-decoration:none;
+    border:1px solid #d8e5f2;
+    background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%);
+    border-radius:14px;
+    padding:14px;
+    color:#1e3554;
+    box-shadow:0 2px 8px rgba(27,43,68,.04);
+  }
+  .inicio-item:hover{
+    background:linear-gradient(180deg,#fafdff 0%,#eef6ff 100%);
+    border-color:#bdd5ee;
+    transform:translateY(-1px);
+    transition:.18s ease;
+  }
+  .inicio-num{
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:#1f4e79;color:#fff;font-weight:800;font-size:14px;
+    flex:0 0 34px;
+  }
+  .inicio-text{font-weight:800;line-height:1.3}
+  #sec-resumen .grid4{margin-top:10px}
+  #sec-resumen .card{box-shadow:none !important}
+  @media(max-width:1100px){.inicio-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:700px){.inicio-grid{grid-template-columns:1fr}}
+
+  .cfo-analysis{scroll-margin-top:18px}
+  .cfo-lead{
+    padding:16px 18px;
+    border-radius:14px;
+    background:linear-gradient(90deg,#eaf3ff,#f7fbff);
+    border:1px solid #cfe1f7;
+    color:#213653;
+    font-size:15px;
+    line-height:1.55;
+    margin-bottom:14px;
+  }
+  .cfo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  .cfo-card{position:relative;padding:15px;border:1px solid #dbe7f3;border-radius:14px;background:#fbfdff}
+  .cfo-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1f4e79;color:#fff;font-weight:800;font-size:12px;margin-bottom:8px}
+  .cfo-card-title{font-weight:800;color:#203552;font-size:14px;margin-bottom:6px}
+  .cfo-card-body{font-size:13px;line-height:1.5;color:#516780}
+  .cfo-analysis h3{font-size:16px;color:#213653;margin:20px 0 10px}
+  .focus-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .focus-card{padding:14px;border-radius:14px;border-left:5px solid}
+  .focus-red{background:#fff5f5;border-color:#d95454}
+  .focus-orange{background:#fff8ef;border-color:#e58b39}
+  .focus-yellow{background:#fffbed;border-color:#d9b53f}
+  .focus-green{background:#f1faf5;border-color:#29945d}
+  .focus-title{font-weight:800;color:#263b55;margin-bottom:6px;font-size:13px}
+  .focus-body{font-size:13px;line-height:1.5;color:#516780}
+  .cfo-list{padding-left:22px;margin:8px 0}
+  .cfo-list li{margin:8px 0;color:#465d77;font-size:13px;line-height:1.5}
+  .action-table{overflow:auto;border:1px solid #dbe7f3;border-radius:14px}
+  .action-table table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .action-table th{background:#edf5fd;color:#2f4a69;text-align:left;padding:10px}
+  .action-table td{padding:10px;border-top:1px solid #e5edf6;vertical-align:top;line-height:1.4}
+  .cfo-decision{margin-top:14px;padding:14px 16px;border-radius:14px;background:#eef7ff;border-left:5px solid #2f80ed;color:#2c4666;font-size:13.5px;line-height:1.5}
+  .cfo-caveat{margin-top:12px;padding:12px 14px;border-radius:12px;background:#f7f7f7;border:1px solid #e1e5ea;color:#667085;font-size:12px;line-height:1.45}
+  @media(max-width:1000px){.cfo-grid{grid-template-columns:1fr}.focus-grid{grid-template-columns:1fr}}
+
+  .cfo-summary-image{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius:14px;
+    border:1px solid #d8e5f2;
+    background:#fff;
+  }
+  #sec-resumen{
+    padding:16px;
+  }
+
+  #sec-resumen{
+    padding:18px !important;
+    background:#ffffff !important;
+  }
+  .cfo-visual-sub{
+    color:#657b96;
+    font-size:13px;
+    margin:-4px 0 14px 0;
+  }
+  .cfo-visual-kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .cfo-kpi{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:13px;
+    border-radius:14px;
+    border:1px solid #dbe7f3;
+    background:#fbfdff;
+  }
+  .cfo-kpi.red{border-top:4px solid #d95454;background:#fff8f8}
+  .cfo-kpi.blue{border-top:4px solid #2f80ed;background:#f7fbff}
+  .cfo-kpi.orange{border-top:4px solid #e59a32;background:#fffaf2}
+  .cfo-kpi-icon{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:#edf4fb;color:#244d78;font-weight:800;font-size:15px;flex:0 0 38px;
+  }
+  .cfo-kpi-value{font-size:22px;font-weight:800;color:#1d304b;line-height:1}
+  .cfo-kpi-label{font-size:12px;font-weight:800;color:#3b536f;margin-top:5px}
+  .cfo-kpi-detail{font-size:11px;color:#7a8da4;margin-top:3px;line-height:1.25}
+
+  .cfo-conclusion-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+  .cfo-conclusion{
+    display:grid;
+    grid-template-columns:42px 1fr;
+    gap:10px;
+    align-items:start;
+    padding:14px;
+    border-radius:14px;
+    border:1px solid #dce7f2;
+    background:#fbfdff;
+  }
+  .cfo-conclusion.red{border-left:5px solid #d95454}
+  .cfo-conclusion.blue{border-left:5px solid #2f80ed}
+  .cfo-conclusion.orange{border-left:5px solid #e59a32}
+  .cfo-conclusion.green{border-left:5px solid #29945d}
+  .cfo-conclusion-num{
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:#173f6d;color:white;font-weight:800;font-size:13px;
+  }
+  .cfo-conclusion-title{
+    font-size:14px;
+    font-weight:800;
+    color:#223954;
+    margin-bottom:4px;
+  }
+  .cfo-conclusion-text{
+    font-size:12.5px;
+    line-height:1.45;
+    color:#5d7189;
+  }
+  .cfo-final-callout{
+    margin-top:12px;
+    padding:14px 16px;
+    border-radius:14px;
+    background:#eaf3ff;
+    border:1px solid #c8ddf5;
+    color:#244261;
+    font-size:13.5px;
+    line-height:1.5;
+  }
+  @media(max-width:1050px){
+    .cfo-visual-kpis{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:750px){
+    .cfo-visual-kpis,.cfo-conclusion-grid{grid-template-columns:1fr}
+  }
+
+  #sec-resumen{padding:18px !important}
+  .exec-subtitle{
+    color:#6e8199;
+    font-size:13px;
+    margin:-3px 0 14px;
+  }
+  .exec-kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .exec-kpi{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px;
+    border:1px solid #dbe6f2;
+    border-radius:16px;
+    background:#fff;
+  }
+  .exec-kpi.danger{border-top:5px solid #d95454;background:#fffafa}
+  .exec-kpi.primary{border-top:5px solid #2f80ed;background:#f8fbff}
+  .exec-kpi.warning{border-top:5px solid #e59a32;background:#fffaf3}
+  .exec-icon{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:800;
+    background:#eef4fb;color:#1f4e79;
+    flex:0 0 42px;
+  }
+  .exec-value{font-size:25px;font-weight:800;color:#18304e;line-height:1}
+  .exec-label{font-size:12px;font-weight:800;color:#38506d;margin-top:6px}
+  .exec-note{font-size:11px;color:#7b8da3;margin-top:2px}
+
+  .exec-main-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .exec-block{
+    min-height:190px;
+    border-radius:16px;
+    padding:16px;
+    border:1px solid #dce7f2;
+    background:#fbfdff;
+  }
+  .exec-block.danger{border-left:6px solid #d95454;background:#fffafa}
+  .exec-block.primary{border-left:6px solid #2f80ed;background:#f8fbff}
+  .exec-block.warning{border-left:6px solid #e59a32;background:#fffaf3}
+  .exec-block-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .exec-num{
+    font-size:11px;
+    font-weight:800;
+    color:#fff;
+    background:#173f6d;
+    padding:6px 9px;
+    border-radius:999px;
+  }
+  .exec-block-icon{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:#edf4fb;color:#173f6d;
+    font-size:18px;font-weight:800;
+  }
+  .exec-block-title{
+    font-size:15px;
+    font-weight:800;
+    color:#203754;
+    margin-bottom:8px;
+  }
+  .exec-headline{
+    font-size:17px;
+    font-weight:800;
+    color:#1b2e48;
+    line-height:1.25;
+    margin-bottom:8px;
+  }
+  .exec-detail{
+    font-size:12.5px;
+    color:#61768e;
+    line-height:1.45;
+  }
+
+  .exec-compare{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:4px;
+  }
+  .exec-list{
+    border-radius:16px;
+    padding:14px 16px;
+    border:1px solid #dce7f2;
+  }
+  .exec-list.danger{background:#fff7f7;border-left:5px solid #d95454}
+  .exec-list.success{background:#f3fbf6;border-left:5px solid #2d9b62}
+  .exec-list-title{
+    font-size:13px;
+    font-weight:800;
+    color:#263d58;
+    margin-bottom:7px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .exec-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:7px 0;
+    border-top:1px solid rgba(100,120,145,.14);
+    font-size:12.5px;
+    color:#516880;
+  }
+  .exec-row strong{color:#243b57}
+
+  .exec-decision{
+    margin-top:12px;
+    padding:15px 17px;
+    border-radius:14px;
+    background:#eaf3ff;
+    border:1px solid #c8ddf5;
+    border-left:6px solid #2f80ed;
+    color:#274664;
+    font-size:14px;
+    line-height:1.45;
+  }
+  @media(max-width:1000px){
+    .exec-kpis{grid-template-columns:repeat(2,1fr)}
+    .exec-main-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:720px){
+    .exec-kpis,.exec-compare{grid-template-columns:1fr}
+  }
+
+  .avg-margin-analysis{
+    margin:2px 0 14px 0;
+    padding:16px;
+    border-radius:16px;
+    border:1px solid #d6e4f1;
+    background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);
+  }
+  .avg-margin-title{
+    font-size:15px;
+    font-weight:800;
+    color:#203754;
+    margin-bottom:4px;
+  }
+  .avg-margin-subtitle{
+    font-size:12.5px;
+    color:#647991;
+    margin-bottom:12px;
+    line-height:1.45;
+  }
+  .avg-margin-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .avg-margin-item{
+    background:#fff;
+    border:1px solid #dbe6f2;
+    border-radius:14px;
+    padding:12px;
+  }
+  .avg-margin-value{
+    font-size:22px;
+    font-weight:800;
+    color:#18304e;
+    line-height:1;
+    margin-bottom:6px;
+  }
+  .avg-margin-label{
+    font-size:12px;
+    font-weight:800;
+    color:#38506d;
+    margin-bottom:5px;
+  }
+  .avg-margin-desc{
+    font-size:11.5px;
+    color:#73869d;
+    line-height:1.4;
+  }
+  .avg-margin-note{
+    margin-top:12px;
+    padding:12px 14px;
+    background:#eef5fd;
+    border:1px solid #d4e3f3;
+    border-left:5px solid #2f80ed;
+    border-radius:12px;
+    font-size:12.5px;
+    color:#38506d;
+    line-height:1.45;
+  }
+  @media(max-width:1000px){
+    .avg-margin-grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:700px){
+    .avg-margin-grid{grid-template-columns:1fr}
+  }
+
+
+  /* Hoja 7 - Costo Laboral */
+  #sec-costo-laboral{scroll-margin-top:18px}
+  .labor-toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .labor-toolbar label{
+    font-size:12px;
+    font-weight:800;
+    color:#526a86;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  #laborMonthSelect{min-width:180px}
+  .labor-kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .labor-kpi{
+    padding:14px;
+    border:1px solid #dbe6f2;
+    border-radius:15px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  }
+  .labor-kpi .k-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:#72869e;
+    font-weight:800;
+  }
+  .labor-kpi .k-value{
+    margin-top:7px;
+    font-size:23px;
+    line-height:1.05;
+    color:#18304e;
+    font-weight:800;
+  }
+  .labor-kpi .k-note{
+    margin-top:5px;
+    font-size:11.5px;
+    color:#7a8da4;
+  }
+  .labor-table-wrap{
+    overflow:auto;
+    border:1px solid #d7e5f3;
+    border-radius:16px;
+    background:#fff;
+    max-height:760px;
+  }
+  #laborTable{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:12.5px;
+  }
+  #laborTable thead th{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding:11px 10px;
+    background:#eaf2fb !important;
+    color:#304c6d !important;
+    border-bottom:1px solid #d3e0ee !important;
+    text-align:right;
+    font-weight:800 !important;
+  }
+  #laborTable thead th:first-child{
+    text-align:left;
+    left:0;
+    z-index:4;
+    min-width:360px;
+    background:#e3eef9 !important;
+  }
+  #laborTable tbody td{
+    padding:10px;
+    border-bottom:1px solid #e8eef5 !important;
+    border-right:1px solid #edf2f7 !important;
+    text-align:right;
+    white-space:nowrap;
+    background:#fff;
+  }
+  #laborTable tbody tr:nth-child(even) td{background:#fbfdff}
+  #laborTable tbody td:first-child{
+    position:sticky;
+    left:0;
+    z-index:2;
+    min-width:360px;
+    text-align:left;
+    font-weight:700;
+    color:#253b57;
+    background:#f8fbff !important;
+  }
+  #laborTable tbody tr:hover td{background:#f0f6fd !important}
+  .labor-money{font-variant-numeric:tabular-nums;font-weight:800;color:#223a57}
+  .labor-hour{font-variant-numeric:tabular-nums;font-weight:800;color:#245b86}
+  @media(max-width:1050px){.labor-kpis{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:700px){
+    .labor-kpis{grid-template-columns:1fr}
+    #laborTable thead th:first-child,#laborTable tbody td:first-child{min-width:260px}
+  }
+
+
+  /* Evolución individual de costo laboral */
+  .labor-evolution{
+    margin:16px 0 18px;
+    padding:16px;
+    border:1px solid #d7e5f3;
+    border-radius:16px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  }
+  .labor-evolution-title{
+    font-size:18px;
+    font-weight:800;
+    color:#203754;
+    margin-bottom:4px;
+  }
+  .labor-evolution-sub{
+    font-size:12.5px;
+    color:#687d96;
+    line-height:1.45;
+    margin-bottom:12px;
+  }
+  .labor-evolution-toolbar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .labor-evolution-toolbar label{
+    font-size:12px;
+    font-weight:800;
+    color:#506983;
+  }
+  #laborClientSelect{min-width:420px}
+  #laborMetricSelect{min-width:210px}
+  .labor-chartbox{
+    height:560px;
+    border:1px solid #dce8f5;
+    border-radius:16px;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
+    overflow:hidden;
+  }
+  #laborLineSvg{width:100%;height:100%;display:block}
+  .labor-mini-insight{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:12px;
+  }
+  @media(max-width:800px){
+    #laborClientSelect,#laborMetricSelect{min-width:100%;width:100%}
+    .labor-mini-insight{grid-template-columns:1fr}
+  }
+
+  .baja-kpis{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:14px 0;
+  }
+  .baja-kpi{
+    border:1px solid #dce8f5;
+    border-radius:14px;
+    padding:14px 16px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  }
+  .baja-kpi .k-label{font-size:12px;font-weight:800;color:#647991;text-transform:uppercase;letter-spacing:.35px}
+  .baja-kpi .k-value{font-size:25px;font-weight:900;color:#203754;margin-top:5px}
+  .baja-kpi .k-note{font-size:11.5px;color:#71849a;margin-top:3px;line-height:1.35}
+  .baja-table-wrap{overflow-x:auto;border:1px solid #dce8f5;border-radius:14px;margin-top:12px}
+  #bajaImpactTable{width:100%;border-collapse:collapse;min-width:870px}
+  #bajaImpactTable th{background:#eaf3fb;color:#203754;font-size:12px;text-align:left;padding:11px 12px;border-bottom:1px solid #cfdeec}
+  #bajaImpactTable td{padding:10px 12px;border-bottom:1px solid #e7eef5;font-size:12.5px;color:#2b4059;vertical-align:middle}
+  #bajaImpactTable tbody tr:last-child td{border-bottom:0}
+  #bajaImpactTable td.num,#bajaImpactTable th.num{text-align:right;white-space:nowrap}
+  .impact-cell{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:210px}
+  .impact-bar-track{width:125px;height:9px;border-radius:999px;background:#edf2f7;overflow:hidden}
+  .impact-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#f47c20,#e24d4d)}
+  .impact-value{width:52px;text-align:right;font-weight:900;color:#c84545}
+  .baja-matrix-wrap{overflow-x:auto;border:1px solid #dce8f5;border-radius:14px;margin-top:12px}
+  #bajaHeatmapTable{width:100%;border-collapse:collapse;min-width:1420px}
+  #bajaHeatmapTable th{background:#eaf3fb;color:#203754;font-size:11px;padding:9px 7px;border-bottom:1px solid #cfdeec;text-align:center;white-space:nowrap}
+  #bajaHeatmapTable th:first-child,#bajaHeatmapTable td:first-child{position:sticky;left:0;z-index:2;text-align:left;min-width:315px;max-width:315px}
+  #bajaHeatmapTable td{padding:5px;border-bottom:1px solid #edf2f6;text-align:center;font-size:10.5px}
+  #bajaHeatmapTable td:first-child{background:#fff;color:#2b4059;font-weight:700;padding-left:10px}
+  #bajaHeatmapTable tr.total-row td{background:#eaf3fb;font-weight:900;color:#203754}
+  #bajaHeatmapTable .cell{display:block;padding:7px 5px;border-radius:6px;white-space:nowrap}
+  .baja-chartbox{height:560px;border:1px solid #dce8f5;border-radius:16px;background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);overflow:hidden;margin-top:12px}
+  #bajaAverageSvg,#laborAverageHourSvg{width:100%;height:100%;display:block}
+  .baja-note{margin-top:10px;padding:11px 13px;border-radius:11px;background:#fff8e9;border:1px solid #f2dfb3;color:#6b5a35;font-size:12px;line-height:1.45}
+  @media(max-width:800px){.baja-kpis{grid-template-columns:1fr}}
+
+  .final-hero{
+    position:relative;
+    overflow:hidden;
+    padding:26px;
+    border-radius:18px;
+    color:#fff;
+    background:linear-gradient(130deg,#16324f 0%,#1f4e79 58%,#2d6b9f 100%);
+    box-shadow:0 14px 32px rgba(22,50,79,.18);
+  }
+  .final-hero:after{
+    content:"";
+    position:absolute;
+    width:280px;height:280px;border-radius:50%;
+    right:-100px;top:-140px;
+    background:rgba(255,255,255,.08);
+  }
+  .final-eyebrow{font-size:11px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:#bcdaf2;margin-bottom:9px}
+  .final-thesis{font-size:29px;line-height:1.18;font-weight:900;max-width:970px;letter-spacing:-.3px}
+  .final-thesis strong{color:#ffd37a}
+  .final-sub{font-size:14px;line-height:1.55;color:#d9e9f6;max-width:1080px;margin-top:12px}
+  .final-sub p{margin:0 0 8px}
+  .final-sub p:last-child{margin-bottom:0}
+  .final-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:18px}
+  .final-metric{border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.09);border-radius:13px;padding:13px 14px;backdrop-filter:blur(3px)}
+  .final-metric .v{font-size:22px;font-weight:900;color:#fff}
+  .final-metric .l{font-size:11.5px;color:#cfe2f2;margin-top:3px;line-height:1.3}
+  .final-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:16px}
+  .final-block{border:1px solid #dce8f5;border-radius:16px;padding:17px;background:#fff}
+  .final-block.diagnosis{border-top:5px solid #d95454}
+  .final-block.decision{border-top:5px solid #f0a43c}
+  .final-block.execution{border-top:5px solid #24945d}
+  .final-num{font-size:11px;font-weight:900;letter-spacing:.8px;color:#7b8ea4;text-transform:uppercase}
+  .final-title{font-size:17px;font-weight:900;color:#203754;margin:6px 0 9px}
+  .final-point{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.48;color:#425a73;margin-top:9px}
+  .final-point:before{content:"";width:7px;height:7px;border-radius:50%;background:#7295b5;margin-top:6px;flex:0 0 7px}
+  .final-point b{color:#203754}
+  .critical-wrap{margin-top:16px;border:1px solid #dce8f5;border-radius:16px;overflow:hidden}
+  .critical-head{display:grid;grid-template-columns:1.35fr .65fr 1.65fr;background:#eaf3fb;color:#203754;font-size:12px;font-weight:900}
+  .critical-row{display:grid;grid-template-columns:1.35fr .65fr 1.65fr;border-top:1px solid #e5edf5;color:#405871;font-size:12.5px;background:#fff}
+  .critical-head div,.critical-row div{padding:11px 13px}
+  .critical-row .client{font-weight:800;color:#203754}
+  .critical-row .ratio{font-weight:900;color:#d24b4b}
+  .final-priority{margin-top:16px;padding:16px 18px;border-radius:14px;background:#f3f8fc;border:1px solid #d8e6f2;color:#324c66;font-size:13px;line-height:1.55}
+  .final-priority b{color:#173b5e}
+  .final-quote{margin-top:16px;padding:21px 24px;border-radius:16px;text-align:center;background:linear-gradient(90deg,#fff6df,#fffaf0);border:1px solid #f0d99d;color:#23415e;font-size:22px;line-height:1.32;font-weight:900}
+  .final-quote span{color:#d56b22}
+  @media(max-width:900px){.final-metrics{grid-template-columns:repeat(2,1fr)}.final-grid{grid-template-columns:1fr}.critical-head,.critical-row{grid-template-columns:1fr}.critical-head div:not(:first-child){display:none}.critical-row div{padding:8px 12px}.final-thesis{font-size:24px}}
+
+  /* Cierre ejecutivo visual */
+  .final-visual-intro{font-size:14px;line-height:1.45;color:#d9e9f6;max-width:980px;margin-top:11px}
+  .final-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+  .final-chart-card{border:1px solid #dce8f5;border-radius:17px;background:linear-gradient(180deg,#fff 0%,#f9fcff 100%);padding:17px;min-height:285px;overflow:hidden}
+  .final-chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .final-chart-kicker{font-size:10.5px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;color:#8193a7}
+  .final-chart-title{font-size:17px;font-weight:900;color:#203754;margin-top:4px}
+  .final-chart-badge{white-space:nowrap;padding:6px 9px;border-radius:999px;font-size:11.5px;font-weight:900}
+  .final-chart-badge.red{color:#b83d3d;background:#fff0f0;border:1px solid #f1c8c8}
+  .final-chart-badge.orange{color:#a66508;background:#fff7e7;border:1px solid #efdbaf}
+  .final-chart-badge.blue{color:#245d8d;background:#eef7ff;border:1px solid #cee2f4}
+  .final-chart-card svg{display:block;width:100%;height:205px}
+  .final-axis{font-size:11px;fill:#71859b;font-weight:700}
+  .final-value-label{font-size:19px;fill:#203754;font-weight:900}
+  .final-gridline{stroke:#dce7f1;stroke-width:1;stroke-dasharray:4 5}
+  .final-ratio-chart{padding:12px 3px 2px}
+  .ratio-axis{display:flex;justify-content:space-between;margin:0 0 11px 118px;color:#8a9bad;font-size:10px;font-weight:800}
+  .ratio-row{display:grid;grid-template-columns:108px 1fr 66px;gap:10px;align-items:center;margin:17px 0}
+  .ratio-label{font-size:12px;font-weight:900;color:#3d5570}
+  .ratio-track{height:23px;border-radius:999px;background:linear-gradient(90deg,#e8f1f8,#f3f7fb);position:relative;overflow:hidden;border:1px solid #dce7f1}
+  .ratio-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#77a7ce,#2f6d9d)}
+  .ratio-fill.alert{background:linear-gradient(90deg,#f1b04e,#dc654f)}
+  .ratio-value{font-size:14px;font-weight:900;color:#203754;text-align:right}
+  .ratio-scale-note{text-align:right;color:#899bad;font-size:10.5px;margin-top:22px}
+  .stack-chart{padding-top:12px}
+  .stack-row{display:grid;grid-template-columns:48px 1fr;gap:11px;align-items:center;margin:20px 0}
+  .stack-year{font-size:13px;font-weight:900;color:#314b67}
+  .stack-track{height:50px;display:flex;border-radius:11px;overflow:hidden;border:1px solid #d5e2ee;background:#edf3f8}
+  .stack-basic,.stack-other{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;white-space:nowrap}
+  .stack-basic{background:linear-gradient(90deg,#f3bd54,#e5942d);color:#533407}
+  .stack-other{background:#d9e7f2;color:#3b5671}
+  .stack-legend{display:flex;gap:17px;justify-content:flex-end;color:#6f8297;font-size:11px;font-weight:800}
+  .legend-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+  .legend-dot.basic{background:#e9a13a}.legend-dot.other{background:#d9e7f2}
+  .impact-bars{padding:4px 0}
+  .impact-final-row{display:grid;grid-template-columns:180px 1fr 52px;gap:10px;align-items:center;margin:17px 0}
+  .impact-final-label{font-size:11.5px;font-weight:900;color:#3c5570;line-height:1.25}
+  .impact-final-track{height:20px;border-radius:999px;background:#edf3f8;overflow:hidden}
+  .impact-final-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#f3a143,#db5d52)}
+  .impact-final-value{text-align:right;font-size:13px;font-weight:900;color:#bd4a45}
+  .final-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .final-action{display:flex;gap:11px;align-items:center;border:1px solid #dce8f5;border-radius:15px;padding:14px;background:#fff}
+  .final-action-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 34px;background:#173f6d;color:#fff;font-size:12px;font-weight:900}
+  .final-action-label{font-size:13px;font-weight:900;color:#213b58;line-height:1.35}
+  @media(max-width:900px){.final-chart-grid,.final-actions{grid-template-columns:1fr}.impact-final-row{grid-template-columns:145px 1fr 48px}}
+
+  .paritaria-analysis{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%)}
+  .paritaria-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:14px 0}
+  .paritaria-kpi{border:1px solid #dce7f1;border-radius:14px;padding:14px 15px;background:#fff}
+  .paritaria-kpi.primary{background:linear-gradient(150deg,#fff8df,#fff1b9);border-color:#ecd17e}
+  .paritaria-kpi .k-label{font-size:11px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;color:#6b7d91}
+  .paritaria-kpi .k-value{font-size:25px;line-height:1.1;font-weight:900;color:#203754;margin-top:6px}
+  .paritaria-kpi.primary .k-value{color:#9a6411}
+  .paritaria-kpi .k-note{font-size:11.5px;color:#6c7f94;margin-top:4px;line-height:1.35}
+  .paritaria-reading{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;margin:14px 0}
+  .paritaria-callout{border-radius:14px;padding:15px 17px;background:#f0f6fb;border:1px solid #d5e4f0;color:#314b65;font-size:13px;line-height:1.55}
+  .paritaria-callout strong{color:#173b5e}
+  .paritaria-shifts{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .paritaria-shift{border-radius:11px;padding:10px 8px;text-align:center;border:1px solid #dce7f1;background:#fff}
+  .paritaria-shift .name{font-size:10px;font-weight:800;color:#718399;line-height:1.2;min-height:25px}
+  .paritaria-shift .delta{font-size:17px;font-weight:900;margin-top:5px}
+  .paritaria-shift .delta.up{color:#bb7610}.paritaria-shift .delta.down{color:#4f7899}
+  .paritaria-chartbox{height:590px;border:1px solid #dce7f1;border-radius:16px;background:#fff;overflow:hidden;margin-top:10px}
+  #paritariaBasicSvg{width:100%;height:100%;display:block}
+  .paritaria-legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:10px 2px 0;font-size:12px;color:#536a82;font-weight:700}
+  .paritaria-legend span{display:inline-flex;gap:7px;align-items:center}
+  .paritaria-legend i{display:inline-block;width:13px;height:13px;border-radius:4px}
+  .paritaria-table-wrap{overflow-x:auto;border:1px solid #dce7f1;border-radius:14px;margin-top:10px;max-height:650px}
+  #paritariaTable{width:100%;border-collapse:separate;border-spacing:0;min-width:1080px}
+  #paritariaTable th{position:sticky;top:0;z-index:2;background:#eaf3fb;color:#203754;font-size:11px;text-align:right;padding:10px 9px;border-bottom:1px solid #cadceb;white-space:nowrap}
+  #paritariaTable th:first-child{text-align:left}
+  #paritariaTable td{padding:9px;border-bottom:1px solid #e8eef4;font-size:11.5px;text-align:right;color:#334c65;white-space:nowrap}
+  #paritariaTable td:first-child{text-align:left;font-weight:800;color:#203754}
+  #paritariaTable td.basic-cell{background:#fff5cf;color:#9a6411;font-weight:900}
+  #paritariaTable td.delta-up{color:#b66c08;font-weight:900}#paritariaTable td.delta-down{color:#427398;font-weight:900}
+  #paritariaTable tr.year-start td{border-top:3px solid #b9cfe2}
+  @media(max-width:950px){.paritaria-kpis{grid-template-columns:repeat(2,1fr)}.paritaria-reading{grid-template-columns:1fr}.paritaria-shifts{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:620px){.paritaria-kpis{grid-template-columns:1fr}.paritaria-shifts{grid-template-columns:repeat(2,1fr)}}
+
+</style>
+</head>
+<body>
+<div class="wrap"><div class="top">
+<div>
+<h1>Evolución Visual del Margen Bruto por Cliente</h1>
+<div class="sub">
+        Tablero gerencial completo con los <b>27 clientes</b> y el período <b>01/2025 a 06/2026</b>.
+        La lógica es simple: ver rápido quién mejora, quién cae y en qué meses se rompe el margen.
+      </div>
+</div>
+<div class="actions">
+<button onclick="window.print()">Imprimir / PDF</button>
+</div>
+</div><div style="margin-top:20px"><div class="section-title"><h2>Ranking de variación</h2><span class="pill">Detalle complementario</span></div></div><div class="card" id="inicio" style="margin:12px 0 16px 0"><div class="section-title"><h2 style="font-size:21px">Inicio</h2><span class="pill">Orden del tablero</span></div><div class="muted" style="font-size:13px;line-height:1.5;margin-bottom:12px">Esta portada sirve para ordenar la lectura del tablero. Hacé clic en cada bloque para ir directo a la sección.</div><div class="inicio-grid"><a class="inicio-item" href="#sec-mejora-deteriora"><div class="inicio-num">1</div><div class="inicio-text">Quién mejora y quién deteriora margen</div></a><a class="inicio-item" href="#sec-matriz"><div class="inicio-num">2</div><div class="inicio-text">Matriz visual de margen mensual</div></a><a class="inicio-item" href="#sec-ranking"><div class="inicio-num">3</div><div class="inicio-text">Ranking de variación</div></a><a class="inicio-item" href="#sec-resumen"><div class="inicio-num">4</div><div class="inicio-text">Análisis de Paritaria por Conformado</div></a><a class="inicio-item" href="#sec-cartera"><div class="inicio-num">5</div><div class="inicio-text">Promedio mensual de la cartera</div></a><a class="inicio-item" href="#sec-cliente"><div class="inicio-num">6</div><div class="inicio-text">Evolución del cliente seleccionado</div></a><a class="inicio-item" href="#sec-costo-laboral"><div class="inicio-num">7</div><div class="inicio-text">Costo Laboral</div></a><a class="inicio-item" href="#sec-baja-clientes"><div class="inicio-num">8</div><div class="inicio-text">Baja de Clientes</div></a><a class="inicio-item" href="#sec-conclusion-final"><div class="inicio-num">9</div><div class="inicio-text">Conclusión Final</div></a></div></div><div class="card" id="sec-mejora-deteriora" style="margin-top:14px"><div class="section-title"><h2 style="font-size:20px">Quién mejora y quién deteriora margen</h2><span class="pill">Variación desde Ene-25</span></div><div class="muted" style="font-size:13px;line-height:1.45;margin-bottom:10px">Vista ejecutiva ordenada de peor a mejor. Cada barra muestra cuántos puntos porcentuales ganó o perdió cada cliente respecto de enero 2025. Rojo = deterioro; verde = mejora. Hacé clic en una barra para abrir la evolución mensual de ese cliente en el gráfico superior.</div><div class="trend-summary" id="trendSummary"></div><div class="delta-chart-wrap"><svg id="deltaOverviewSvg" preserveaspectratio="none" viewbox="0 0 1200 1000"></svg></div><div class="foot">Para clientes dados de baja, se compara enero 2025 contra su último mes disponible. La barra resume dirección e intensidad; el gráfico individual superior muestra el recorrido mes a mes.</div></div><div class="card" id="sec-matriz" style="margin-top:18px"><div class="section-title"><h2 style="font-size:19px">Matriz visual de margen mensual</h2><span class="pill">Heatmap: verde mejor · rojo peor</span></div><div class="muted" style="font-size:13px;line-height:1.45;margin-bottom:10px">Vista complementaria para comparar mes a mes los 27 clientes en formato tabla de color. Sirve para detectar rápido períodos verdes, amarillos o rojos.</div><div class="heatmap-wrap"><table id="heatmapTable"><thead></thead><tbody></tbody></table></div><div class="foot">Debajo de todo queda como apoyo visual del análisis. La lectura principal siguen siendo los gráficos.</div></div><div class="card" id="sec-ranking" style="margin-top:14px">
+<div class="section-title" style="display:none">
+<h2 style="font-size:18px">Ranking de variación</h2>
+<span class="pill">Enero 2025 vs último mes disponible</span>
+</div>
+<div id="variationRanking"></div>
+</div><div class="card paritaria-analysis" id="sec-resumen" style="margin-top:18px">
+  <div class="section-title">
+    <h2 style="font-size:22px">4. Análisis de Paritaria por Conformado</h2>
+    <span class="pill">Foco: participación del básico</span>
+  </div>
+  <div class="muted" style="font-size:13px;line-height:1.5;margin-bottom:12px">
+    Evolución de la composición porcentual del conformado entre enero 2025 y diciembre 2026. La lectura principal muestra cuánto representa el <b>sueldo básico</b> y cuánto queda distribuido entre los demás conceptos.
+  </div>
+  <div class="paritaria-kpis">
+    <div class="paritaria-kpi"><div class="k-label">Básico promedio 2025</div><div class="k-value">55,29%</div><div class="k-note">Promedio de los 12 meses</div></div>
+    <div class="paritaria-kpi primary"><div class="k-label">Básico promedio 2026</div><div class="k-value">57,25%</div><div class="k-note">Mayor peso estructural dentro del conformado</div></div>
+    <div class="paritaria-kpi primary"><div class="k-label">Cambio interanual</div><div class="k-value">+1,97 pp</div><div class="k-note">Promedio 2026 versus promedio 2025</div></div>
+    <div class="paritaria-kpi"><div class="k-label">Máxima participación</div><div class="k-value">58,67%</div><div class="k-note">Julio 2026</div></div>
+  </div>
+  <div class="paritaria-reading">
+    <div class="paritaria-callout">
+      <strong>Lectura gerencial:</strong> en 2026 el básico ganó 1,97 puntos porcentuales de participación promedio respecto de 2025. El movimiento se explica principalmente por la menor participación de viáticos (-2,21 pp) y presentismo (-0,87 pp), parcialmente compensada por una mayor presencia de sumas no remunerativas (+1,78 pp). Esto importa porque cada peso trasladado al básico también amplifica antigüedad, nocturnidad, licencias y otros adicionales calculados sobre él.
+    </div>
+    <div class="paritaria-shifts" id="paritariaShifts"></div>
+  </div>
+  <div class="section-title" style="margin-top:18px">
+    <h2 style="font-size:19px">Básico versus otros conceptos</h2>
+    <span class="pill">Composición del conformado</span>
+  </div>
+  <div class="paritaria-chartbox"><svg id="paritariaBasicSvg" preserveAspectRatio="none" viewBox="0 0 1200 590"></svg></div>
+  <div class="paritaria-legend">
+    <span><i style="background:#f2c85b"></i>Básico</span>
+    <span><i style="background:#d9e7f0"></i>Otros conceptos</span>
+    <span><i style="background:#c07a12;border-radius:50%"></i>Línea de participación del básico</span>
+  </div>
+  <div class="foot">El gráfico representa participación porcentual, no aumento nominal. La serie 2025-2026 se encuentra completa.</div>
+  <div class="section-title" style="margin-top:22px">
+    <h2 style="font-size:19px">Detalle mensual del conformado</h2>
+    <span class="pill">Tabla completa</span>
+  </div>
+  <div class="paritaria-table-wrap">
+    <table id="paritariaTable">
+      <thead><tr><th>Mes</th><th>Básico</th><th>Δ básico</th><th>Presentismo</th><th>Adic. rem.</th><th>Viáticos</th><th>Suma no rem.</th><th>Otros conceptos</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="foot">Fuente: conformado informado. Las diferencias pueden presentar desvíos de 0,01 pp por redondeo.</div>
+</div><div class="card" id="sec-cartera" style="margin-top:14px">
+<div class="section-title">
+<h2 style="font-size:20px">Promedio mensual de la cartera</h2>
+<span class="pill">Vista global</span>
+</div>
+<div class="chartbox" style="height:560px"><svg id="portfolioSvg" preserveAspectRatio="none" preserveaspectratio="none" viewBox="0 0 1200 560" viewbox="0 0 1200 360"></svg></div>
+<div class="foot">Sirve para ver si la rentabilidad promedio general mejora o se deteriora mes a mes.</div>
+</div><div class="card" id="sec-cliente" style="margin-top:14px">
+<div class="section-title">
+<h2 style="font-size:20px">Evolución del cliente seleccionado</h2>
+<span class="pill">Gráfico de línea</span>
+</div>
+<div class="toolbar">
+<select id="clientSelect"></select>
+<input id="searchBox" placeholder="Buscar cliente en la matriz..." type="text"/>
+</div>
+<div class="chartbox" style="margin-top:10px;height:560px"><svg id="lineSvg" preserveAspectRatio="none" viewBox="0 0 1200 560"></svg></div>
+<div class="foot" style="margin-top:6px">Pasá el cursor sobre cada punto para ver el mes y el margen exacto.</div>
+<div class="mini-insight">
+<div class="mini"><div class="t">Primer mes</div><div class="v" id="miniStart">—</div><div class="s">Margen inicial disponible</div></div>
+<div class="mini"><div class="t">Último mes</div><div class="v" id="miniEnd">—</div><div class="s">Margen final disponible</div></div>
+<div class="mini"><div class="t">Variación</div><div class="v" id="miniDelta">—</div><div class="s">Último mes vs primer mes</div></div>
+</div>
+</div>
+
+<div class="card" id="sec-costo-laboral" style="margin-top:18px">
+  <div class="section-title">
+    <h2 style="font-size:22px">7. Costo Laboral</h2>
+    <span class="pill">Costo total + costo por hora</span>
+  </div>
+  <div class="muted" style="font-size:13px;line-height:1.5;margin-bottom:12px">
+    Evolución mensual del costo laboral por cliente desde <b>Enero 2025 hasta Junio 2026</b>. Seleccioná un mes para ver el costo laboral total y el costo por hora de cada cliente.
+  </div>
+  <div class="labor-toolbar">
+    <label for="laborMonthSelect">Mes</label>
+    <select id="laborMonthSelect"></select>
+  </div>
+  <div class="labor-kpis">
+    <div class="labor-kpi"><div class="k-label">Costo laboral total</div><div class="k-value" id="laborTotalKpi">—</div><div class="k-note">Suma de los clientes del mes</div></div>
+    <div class="labor-kpi"><div class="k-label">Costo promedio por hora</div><div class="k-value" id="laborAvgHourKpi">—</div><div class="k-note">Promedio ponderado por horas implícitas</div></div>
+    <div class="labor-kpi"><div class="k-label">Mayor costo por hora</div><div class="k-value" id="laborMaxHourKpi">—</div><div class="k-note" id="laborMaxHourClient">—</div></div>
+    <div class="labor-kpi"><div class="k-label">Menor costo por hora</div><div class="k-value" id="laborMinHourKpi">—</div><div class="k-note" id="laborMinHourClient">—</div></div>
+  </div>
+  <div class="labor-evolution">
+    <div class="labor-evolution-title">Evolución del costo laboral del cliente seleccionado</div>
+    <div class="labor-evolution-sub">Misma lógica que el gráfico de margen: seleccioná un cliente y seguí su evolución mensual entre Ene-25 y Jun-26.</div>
+    <div class="labor-evolution-toolbar">
+      <label for="laborClientSelect">Cliente</label>
+      <select id="laborClientSelect"></select>
+      <label for="laborMetricSelect">Métrica</label>
+      <select id="laborMetricSelect">
+        <option value="labor_total">Costo laboral total</option>
+        <option value="cost_per_hour">Costo por HS</option>
+      </select>
+    </div>
+    <div class="labor-chartbox"><svg id="laborLineSvg" preserveAspectRatio="none" viewBox="0 0 1200 560"></svg></div>
+    <div class="foot" style="margin-top:6px">Pasá el cursor sobre cada punto para ver el mes y el costo exacto.</div>
+    <div class="labor-mini-insight">
+      <div class="mini"><div class="t">Primer mes</div><div class="v" id="laborMiniStart">—</div><div class="s">Primer dato disponible</div></div>
+      <div class="mini"><div class="t">Último mes</div><div class="v" id="laborMiniEnd">—</div><div class="s">Último dato disponible</div></div>
+      <div class="mini"><div class="t">Variación</div><div class="v" id="laborMiniDelta">—</div><div class="s">Cambio acumulado del período</div></div>
+    </div>
+  </div>
+  <div class="labor-evolution">
+    <div class="labor-evolution-title">Promedio mensual del precio por hora de todos los clientes</div>
+    <div class="labor-evolution-sub">Promedio simple mensual del costo por hora. Los clientes sin dato informado en un mes no participan del cálculo.</div>
+    <div class="labor-chartbox"><svg id="laborAverageHourSvg" preserveAspectRatio="none" viewBox="0 0 1200 560"></svg></div>
+    <div class="foot" style="margin-top:6px">Pasá el cursor sobre cada punto para ver el promedio exacto y la cantidad de clientes incluidos.</div>
+    <div class="labor-mini-insight">
+      <div class="mini"><div class="t">Enero 2025</div><div class="v" id="laborAvgStart">—</div><div class="s">Promedio simple inicial</div></div>
+      <div class="mini"><div class="t">Junio 2026</div><div class="v" id="laborAvgEnd">—</div><div class="s">Promedio simple final</div></div>
+      <div class="mini"><div class="t">Variación</div><div class="v" id="laborAvgDelta">—</div><div class="s">Cambio acumulado</div></div>
+    </div>
+  </div>
+  <div class="labor-table-wrap">
+    <table id="laborTable">
+      <thead><tr><th>Cliente</th><th>Costo laboral total</th><th>Costo por HS</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="foot">Fuente cargada: Enero 2025 a Junio 2026. Los campos sin costo por hora informado en el archivo original se muestran como —.</div>
+</div>
+
+<div class="card" id="sec-baja-clientes" style="margin-top:18px">
+  <div class="section-title">
+    <h2 style="font-size:22px">8. Baja de Clientes</h2>
+    <span class="pill">Margen + impacto en facturación</span>
+  </div>
+  <div class="muted" style="font-size:13px;line-height:1.5;margin-bottom:12px">
+    Seguimiento de los clientes dados de baja: evolución de margen bruto, horas mensuales perdidas y porcentaje que representaba cada cuenta sobre la facturación total del mes de su baja.
+  </div>
+
+  <div class="baja-kpis">
+    <div class="baja-kpi"><div class="k-label">Clientes dados de baja</div><div class="k-value" id="bajaClientsKpi">—</div><div class="k-note">Incluye las dos bajas adicionales informadas</div></div>
+    <div class="baja-kpi"><div class="k-label">Horas mensuales perdidas</div><div class="k-value" id="bajaHoursKpi">—</div><div class="k-note">Suma de horas de los clientes listados</div></div>
+    <div class="baja-kpi"><div class="k-label">Mayor impacto individual</div><div class="k-value" id="bajaMaxImpactKpi">—</div><div class="k-note" id="bajaMaxImpactClient">—</div></div>
+  </div>
+
+  <div class="section-title" style="margin-top:16px">
+    <h2 style="font-size:19px">Impacto de cada baja sobre la facturación</h2>
+    <span class="pill">% del total del mes</span>
+  </div>
+  <div class="baja-table-wrap">
+    <table id="bajaImpactTable">
+      <thead><tr><th>Cliente</th><th class="num">Horas mensuales</th><th class="num">Período de baja</th><th class="num">% facturación del mes</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="baja-note"><b>Criterio de lectura:</b> cada porcentaje usa como denominador la facturación total del mes en que se produjo esa baja. Por eso no corresponde sumar los porcentajes como si fueran un único mes.</div>
+
+  <div class="section-title" style="margin-top:22px">
+    <h2 style="font-size:19px">Matriz visual de margen mensual</h2>
+    <span class="pill">Clientes dados de baja</span>
+  </div>
+  <div class="baja-matrix-wrap"><table id="bajaHeatmapTable"><thead></thead><tbody></tbody></table></div>
+  <div class="foot">Las celdas grises indican meses sin información. Instituto de Agrobiotecnología Rosario y Speedagro se incluyen en el impacto de facturación, pero no en la matriz porque la base de margen no contiene su serie mensual.</div>
+
+  <div class="section-title" style="margin-top:22px">
+    <h2 style="font-size:19px">Promedio mensual de los clientes dados de baja</h2>
+    <span class="pill">Margen bruto consolidado</span>
+  </div>
+  <div class="baja-chartbox"><svg id="bajaAverageSvg" preserveAspectRatio="none" viewBox="0 0 1200 560"></svg></div>
+  <div class="foot">Línea basada en el margen consolidado mensual informado en la base de bajas.</div>
+</div>
+
+<div class="card" id="sec-conclusion-final" style="margin-top:18px">
+  <div class="section-title">
+    <h2 style="font-size:22px">9. Conclusión Final</h2>
+  </div>
+
+  <div class="final-chart-grid">
+    <div class="final-chart-card">
+      <div class="final-chart-head">
+        <div><div class="final-chart-kicker">Rentabilidad</div><div class="final-chart-title">Margen promedio de la cartera</div></div>
+        <div class="final-chart-badge red">−6,36 pp</div>
+      </div>
+      <svg viewBox="0 0 520 205" role="img" aria-label="El margen promedio cayó de 32,64 por ciento a 26,28 por ciento">
+        <line class="final-gridline" x1="55" y1="45" x2="485" y2="45"></line>
+        <line class="final-gridline" x1="55" y1="95" x2="485" y2="95"></line>
+        <line class="final-gridline" x1="55" y1="145" x2="485" y2="145"></line>
+        <text class="final-axis" x="43" y="49" text-anchor="end">35%</text>
+        <text class="final-axis" x="43" y="99" text-anchor="end">30%</text>
+        <text class="final-axis" x="43" y="149" text-anchor="end">25%</text>
+        <path d="M95 69 C210 74 315 111 445 132" fill="none" stroke="#d95454" stroke-width="6" stroke-linecap="round"></path>
+        <circle cx="95" cy="69" r="9" fill="#fff" stroke="#d95454" stroke-width="5"></circle>
+        <circle cx="445" cy="132" r="9" fill="#fff" stroke="#d95454" stroke-width="5"></circle>
+        <text class="final-value-label" x="95" y="43" text-anchor="middle">32,64%</text>
+        <text class="final-value-label" x="445" y="112" text-anchor="middle">26,28%</text>
+        <text class="final-axis" x="95" y="182" text-anchor="middle">Inicio</text>
+        <text class="final-axis" x="445" y="182" text-anchor="middle">Actual</text>
+      </svg>
+    </div>
+
+    <div class="final-chart-card">
+      <div class="final-chart-head">
+        <div><div class="final-chart-kicker">Productividad</div><div class="final-chart-title">Horas básicas / horas facturadas</div></div>
+        <div class="final-chart-badge orange">Más horas ociosas</div>
+      </div>
+      <div class="final-ratio-chart">
+        <div class="ratio-axis"><span>0,90</span><span>0,95</span><span>1,00</span></div>
+        <div class="ratio-row"><div class="ratio-label">Años buenos</div><div class="ratio-track"><div class="ratio-fill" style="width:40%"></div></div><div class="ratio-value">0,94</div></div>
+        <div class="ratio-row"><div class="ratio-label">Actual</div><div class="ratio-track"><div class="ratio-fill alert" style="width:75%"></div></div><div class="ratio-value">0,97/0,98</div></div>
+        <div class="ratio-scale-note">Escala ampliada 0,90–1,00 · acercarse a 1 indica menor productividad</div>
+      </div>
+    </div>
+
+    <div class="final-chart-card">
+      <div class="final-chart-head">
+        <div><div class="final-chart-kicker">Paritaria</div><div class="final-chart-title">El básico gana peso en el conformado</div></div>
+        <div class="final-chart-badge blue">+1,97 pp</div>
+      </div>
+      <div class="stack-chart">
+        <div class="stack-legend"><span><i class="legend-dot basic"></i>Básico</span><span><i class="legend-dot other"></i>Otros conceptos</span></div>
+        <div class="stack-row"><div class="stack-year">2025</div><div class="stack-track"><div class="stack-basic" style="width:55.29%">55,29%</div><div class="stack-other" style="width:44.71%">44,71%</div></div></div>
+        <div class="stack-row"><div class="stack-year">2026</div><div class="stack-track"><div class="stack-basic" style="width:57.25%">57,25%</div><div class="stack-other" style="width:42.75%">42,75%</div></div></div>
+      </div>
+    </div>
+
+    <div class="final-chart-card">
+      <div class="final-chart-head">
+        <div><div class="final-chart-kicker">Bajas</div><div class="final-chart-title">Mayor impacto sobre facturación</div></div>
+        <div class="final-chart-badge red">45.564 hs</div>
+      </div>
+      <div class="impact-bars">
+        <div class="impact-final-row"><div class="impact-final-label">Banco de Córdoba</div><div class="impact-final-track"><div class="impact-final-fill" style="width:100%"></div></div><div class="impact-final-value">4,78%</div></div>
+        <div class="impact-final-row"><div class="impact-final-label">Libertad</div><div class="impact-final-track"><div class="impact-final-fill" style="width:84.1%"></div></div><div class="impact-final-value">4,02%</div></div>
+        <div class="impact-final-row"><div class="impact-final-label">Universidad Católica</div><div class="impact-final-track"><div class="impact-final-fill" style="width:75.7%"></div></div><div class="impact-final-value">3,62%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="final-actions">
+    <div class="final-action"><div class="final-action-num">01</div><div class="final-action-label">Reasignar horas básicas ociosas</div></div>
+    <div class="final-action"><div class="final-action-num">02</div><div class="final-action-label">Usar horas extra en forma selectiva</div></div>
+    <div class="final-action"><div class="final-action-num">03</div><div class="final-action-label">Actualizar precios por “Estructura”</div></div>
+  </div>
+
+</div>
+</div>
+<script>
+const rawData = [{"client": "CENCOSUD S.A.", "month": "2025-01", "pct": 26.63}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-01", "pct": 22.35}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-01", "pct": 40.5}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-01", "pct": 35.65}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-01", "pct": 36.81}, {"client": "ARCOR SAIC", "month": "2025-01", "pct": 31.65}, {"client": "BANCO MACRO SA", "month": "2025-01", "pct": 34.72}, {"client": "SIPAR ACEROS S.A", "month": "2025-01", "pct": 25.65}, {"client": "LIBERTAD S. A.", "month": "2025-01", "pct": 31.17}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-01", "pct": 26.17}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-01", "pct": 40.03}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-01", "pct": 36.92}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-01", "pct": 28.88}, {"client": "BANCO NACION ARGENTINA", "month": "2025-01", "pct": 37.12}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-01", "pct": 30.15}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-01", "pct": 32.09}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-01", "pct": 30.37}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-01", "pct": 37.14}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-01", "pct": 26.78}, {"client": "LITORAL GAS S.A.", "month": "2025-01", "pct": 33.36}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-01", "pct": 22.33}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-01", "pct": 26.37}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-01", "pct": 45.38}, {"client": "MERCOBEEF S.A", "month": "2025-01", "pct": 41.15}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-01", "pct": 27.84}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-01", "pct": 38.98}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-01", "pct": 35.04}, {"client": "CENCOSUD S.A.", "month": "2025-02", "pct": 24.51}, {"client": "CENCOSUD S.A.", "month": "2025-03", "pct": 22.39}, {"client": "CENCOSUD S.A.", "month": "2025-04", "pct": 21.45}, {"client": "CENCOSUD S.A.", "month": "2025-05", "pct": 24.48}, {"client": "CENCOSUD S.A.", "month": "2025-06", "pct": 21.76}, {"client": "CENCOSUD S.A.", "month": "2025-07", "pct": 24.64}, {"client": "CENCOSUD S.A.", "month": "2025-08", "pct": 24.55}, {"client": "CENCOSUD S.A.", "month": "2025-09", "pct": 22.5}, {"client": "CENCOSUD S.A.", "month": "2025-10", "pct": 24.77}, {"client": "CENCOSUD S.A.", "month": "2025-11", "pct": 24.48}, {"client": "CENCOSUD S.A.", "month": "2025-12", "pct": 22.17}, {"client": "CENCOSUD S.A.", "month": "2026-01", "pct": 23.52}, {"client": "CENCOSUD S.A.", "month": "2026-02", "pct": 19.33}, {"client": "CENCOSUD S.A.", "month": "2026-03", "pct": 24.14}, {"client": "CENCOSUD S.A.", "month": "2026-04", "pct": 20.91}, {"client": "CENCOSUD S.A.", "month": "2026-05", "pct": 24.26}, {"client": "CENCOSUD S.A.", "month": "2026-06", "pct": 21.8}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-02", "pct": 19.64}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-03", "pct": 19.13}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-04", "pct": 19.14}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-05", "pct": 20.71}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-06", "pct": 17.48}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-07", "pct": 22.0}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-08", "pct": 22.05}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-09", "pct": 20.35}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-10", "pct": 20.12}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-11", "pct": 17.74}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2025-12", "pct": 18.77}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2026-01", "pct": 22.47}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2026-02", "pct": 16.42}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2026-03", "pct": 21.43}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2026-04", "pct": 18.88}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2026-05", "pct": 20.56}, {"client": "EMP. PROV. ENERGIA SANTA FE", "month": "2026-06", "pct": 17.74}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-02", "pct": 38.11}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-03", "pct": 36.97}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-04", "pct": 37.36}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-05", "pct": 37.95}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-06", "pct": 34.86}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-07", "pct": 39.44}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-08", "pct": 39.45}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-09", "pct": 38.86}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-10", "pct": 39.47}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-11", "pct": 37.05}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2025-12", "pct": 34.39}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2026-01", "pct": 38.8}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2026-02", "pct": 32.91}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2026-03", "pct": 37.44}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2026-04", "pct": 35.97}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2026-05", "pct": 36.85}, {"client": "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "month": "2026-06", "pct": 35.15}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-02", "pct": 34.32}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-03", "pct": 32.63}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-04", "pct": 32.08}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-05", "pct": 32.94}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-06", "pct": 30.35}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-07", "pct": 34.52}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-08", "pct": 32.1}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-09", "pct": 34.95}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-10", "pct": 32.6}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-11", "pct": 32.05}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2025-12", "pct": 32.94}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2026-01", "pct": 33.51}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2026-02", "pct": 27.82}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2026-03", "pct": 33.27}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2026-04", "pct": 34.45}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2026-05", "pct": 33.91}, {"client": "EMBOTELLADORA DEL ATLANTICO S.A.", "month": "2026-06", "pct": 31.33}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-02", "pct": 32.93}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-03", "pct": 34.52}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-04", "pct": 32.47}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-05", "pct": 35.71}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-06", "pct": 31.83}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-07", "pct": 39.3}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-08", "pct": 37.39}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-09", "pct": 36.61}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-10", "pct": 35.91}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-11", "pct": 34.33}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2025-12", "pct": 34.51}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2026-01", "pct": 35.9}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2026-02", "pct": 30.69}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2026-03", "pct": 34.98}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2026-04", "pct": 31.92}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2026-05", "pct": 33.99}, {"client": "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "month": "2026-06", "pct": 31.27}, {"client": "ARCOR SAIC", "month": "2025-02", "pct": 27.97}, {"client": "ARCOR SAIC", "month": "2025-03", "pct": 29.09}, {"client": "ARCOR SAIC", "month": "2025-04", "pct": 28.75}, {"client": "ARCOR SAIC", "month": "2025-05", "pct": 31.28}, {"client": "ARCOR SAIC", "month": "2025-06", "pct": 27.6}, {"client": "ARCOR SAIC", "month": "2025-07", "pct": 31.38}, {"client": "ARCOR SAIC", "month": "2025-08", "pct": 30.64}, {"client": "ARCOR SAIC", "month": "2025-09", "pct": 30.45}, {"client": "ARCOR SAIC", "month": "2025-10", "pct": 29.75}, {"client": "ARCOR SAIC", "month": "2025-11", "pct": 26.34}, {"client": "ARCOR SAIC", "month": "2025-12", "pct": 23.78}, {"client": "ARCOR SAIC", "month": "2026-01", "pct": 29.4}, {"client": "ARCOR SAIC", "month": "2026-02", "pct": 25.07}, {"client": "ARCOR SAIC", "month": "2026-03", "pct": 27.71}, {"client": "ARCOR SAIC", "month": "2026-04", "pct": 24.49}, {"client": "ARCOR SAIC", "month": "2026-05", "pct": 27.58}, {"client": "ARCOR SAIC", "month": "2026-06", "pct": 24.5}, {"client": "BANCO MACRO SA", "month": "2025-02", "pct": 31.31}, {"client": "BANCO MACRO SA", "month": "2025-03", "pct": 31.43}, {"client": "BANCO MACRO SA", "month": "2025-04", "pct": 33.52}, {"client": "BANCO MACRO SA", "month": "2025-05", "pct": 33.22}, {"client": "BANCO MACRO SA", "month": "2025-06", "pct": 30.67}, {"client": "BANCO MACRO SA", "month": "2025-07", "pct": 38.49}, {"client": "BANCO MACRO SA", "month": "2025-08", "pct": 34.08}, {"client": "BANCO MACRO SA", "month": "2025-09", "pct": 31.76}, {"client": "BANCO MACRO SA", "month": "2025-10", "pct": 32.59}, {"client": "BANCO MACRO SA", "month": "2025-11", "pct": 30.94}, {"client": "BANCO MACRO SA", "month": "2025-12", "pct": 29.84}, {"client": "BANCO MACRO SA", "month": "2026-01", "pct": 31.51}, {"client": "BANCO MACRO SA", "month": "2026-02", "pct": 26.98}, {"client": "BANCO MACRO SA", "month": "2026-03", "pct": 28.87}, {"client": "BANCO MACRO SA", "month": "2026-04", "pct": 27.44}, {"client": "BANCO MACRO SA", "month": "2026-05", "pct": 28.83}, {"client": "BANCO MACRO SA", "month": "2026-06", "pct": 28.93}, {"client": "SIPAR ACEROS S.A", "month": "2025-02", "pct": 25.86}, {"client": "SIPAR ACEROS S.A", "month": "2025-03", "pct": 24.59}, {"client": "SIPAR ACEROS S.A", "month": "2025-04", "pct": 27.39}, {"client": "SIPAR ACEROS S.A", "month": "2025-05", "pct": 27.55}, {"client": "SIPAR ACEROS S.A", "month": "2025-06", "pct": 25.31}, {"client": "SIPAR ACEROS S.A", "month": "2025-07", "pct": 26.82}, {"client": "SIPAR ACEROS S.A", "month": "2025-08", "pct": 27.86}, {"client": "SIPAR ACEROS S.A", "month": "2025-09", "pct": 25.78}, {"client": "SIPAR ACEROS S.A", "month": "2025-10", "pct": 24.76}, {"client": "SIPAR ACEROS S.A", "month": "2025-11", "pct": 24.06}, {"client": "SIPAR ACEROS S.A", "month": "2025-12", "pct": 21.33}, {"client": "SIPAR ACEROS S.A", "month": "2026-01", "pct": 25.15}, {"client": "SIPAR ACEROS S.A", "month": "2026-02", "pct": 21.79}, {"client": "SIPAR ACEROS S.A", "month": "2026-03", "pct": 25.46}, {"client": "SIPAR ACEROS S.A", "month": "2026-04", "pct": 24.59}, {"client": "SIPAR ACEROS S.A", "month": "2026-05", "pct": 26.11}, {"client": "SIPAR ACEROS S.A", "month": "2026-06", "pct": 25.38}, {"client": "LIBERTAD S. A.", "month": "2025-02", "pct": 25.96}, {"client": "LIBERTAD S. A.", "month": "2025-03", "pct": 23.31}, {"client": "LIBERTAD S. A.", "month": "2025-04", "pct": 19.07}, {"client": "LIBERTAD S. A.", "month": "2025-05", "pct": 26.34}, {"client": "LIBERTAD S. A.", "month": "2025-06", "pct": 27.12}, {"client": "LIBERTAD S. A.", "month": "2025-07", "pct": 30.22}, {"client": "LIBERTAD S. A.", "month": "2025-08", "pct": 30.17}, {"client": "LIBERTAD S. A.", "month": "2025-09", "pct": 22.3}, {"client": "LIBERTAD S. A.", "month": "2025-10", "pct": 31.11}, {"client": "LIBERTAD S. A.", "month": "2025-11", "pct": 29.83}, {"client": "LIBERTAD S. A.", "month": "2025-12", "pct": 26.7}, {"client": "LIBERTAD S. A.", "month": "2026-01", "pct": 31.89}, {"client": "LIBERTAD S. A.", "month": "2026-02", "pct": 26.76}, {"client": "LIBERTAD S. A.", "month": "2026-03", "pct": 30.2}, {"client": "LIBERTAD S. A.", "month": "2026-04", "pct": 28.52}, {"client": "LIBERTAD S. A.", "month": "2026-05", "pct": 29.65}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-02", "pct": 23.02}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-03", "pct": 19.04}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-04", "pct": 18.21}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-05", "pct": 19.01}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-06", "pct": 15.78}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-07", "pct": 28.48}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-08", "pct": 23.92}, {"client": "BANCO DE LA PROVINCIA DE CORDOBA SA", "month": "2025-09", "pct": 23.6}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-02", "pct": 36.35}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-03", "pct": 35.91}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-04", "pct": 36.05}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-05", "pct": 38.94}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-06", "pct": 34.74}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-07", "pct": 40.98}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-08", "pct": 40.08}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-09", "pct": 37.42}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-10", "pct": 38.03}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-11", "pct": 37.72}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2025-12", "pct": 34.63}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2026-01", "pct": 37.34}, {"client": "UNIVERSIDAD CATOLICA DE CORDOBA", "month": "2026-02", "pct": 32.09}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-02", "pct": 34.9}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-03", "pct": 36.61}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-04", "pct": 32.74}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-05", "pct": 35.97}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-06", "pct": 34.79}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-07", "pct": 35.92}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-08", "pct": 37.47}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-09", "pct": 37.2}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-10", "pct": 37.65}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-11", "pct": 38.6}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2025-12", "pct": 35.97}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2026-01", "pct": 37.51}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2026-02", "pct": 31.72}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2026-03", "pct": 38.33}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2026-04", "pct": 34.84}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2026-05", "pct": 34.15}, {"client": "ARCOS DEL GOURMET S.A.", "month": "2026-06", "pct": 34.01}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-02", "pct": 27.61}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-03", "pct": 25.92}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-04", "pct": 25.76}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-05", "pct": 28.14}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-06", "pct": 26.08}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-07", "pct": 31.52}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-08", "pct": 31.66}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-09", "pct": 29.03}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-10", "pct": 27.38}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-11", "pct": 26.04}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2025-12", "pct": 24.48}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2026-01", "pct": 29.86}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2026-02", "pct": 25.32}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2026-03", "pct": 23.29}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2026-04", "pct": 23.48}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2026-05", "pct": 24.3}, {"client": "LA GALLEGA SUPERMERCADOS S.A", "month": "2026-06", "pct": 22.46}, {"client": "BANCO NACION ARGENTINA", "month": "2025-02", "pct": 35.04}, {"client": "BANCO NACION ARGENTINA", "month": "2025-03", "pct": 34.0}, {"client": "BANCO NACION ARGENTINA", "month": "2025-04", "pct": 33.29}, {"client": "BANCO NACION ARGENTINA", "month": "2025-05", "pct": 36.47}, {"client": "BANCO NACION ARGENTINA", "month": "2025-06", "pct": 30.11}, {"client": "BANCO NACION ARGENTINA", "month": "2025-07", "pct": 41.33}, {"client": "BANCO NACION ARGENTINA", "month": "2025-08", "pct": 37.17}, {"client": "BANCO NACION ARGENTINA", "month": "2025-09", "pct": 36.43}, {"client": "BANCO NACION ARGENTINA", "month": "2025-10", "pct": 34.95}, {"client": "BANCO NACION ARGENTINA", "month": "2025-11", "pct": 28.99}, {"client": "BANCO NACION ARGENTINA", "month": "2025-12", "pct": 29.66}, {"client": "BANCO NACION ARGENTINA", "month": "2026-01", "pct": 37.73}, {"client": "BANCO NACION ARGENTINA", "month": "2026-02", "pct": 32.23}, {"client": "BANCO NACION ARGENTINA", "month": "2026-03", "pct": 34.49}, {"client": "BANCO NACION ARGENTINA", "month": "2026-04", "pct": 33.44}, {"client": "BANCO NACION ARGENTINA", "month": "2026-05", "pct": 33.42}, {"client": "BANCO NACION ARGENTINA", "month": "2026-06", "pct": 30.27}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-02", "pct": 25.21}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-03", "pct": 25.91}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-04", "pct": 25.51}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-05", "pct": 29.0}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-06", "pct": 22.8}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-07", "pct": 26.86}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-08", "pct": 27.59}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-09", "pct": 24.27}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-10", "pct": 26.17}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-11", "pct": 23.59}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2025-12", "pct": 20.14}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2026-01", "pct": 22.73}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2026-02", "pct": 16.69}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2026-03", "pct": 23.59}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2026-04", "pct": 20.95}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2026-05", "pct": 24.17}, {"client": "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "month": "2026-06", "pct": 22.39}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-02", "pct": 33.93}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-03", "pct": 31.29}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-04", "pct": 29.82}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-05", "pct": 31.7}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-06", "pct": 29.43}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-07", "pct": 30.68}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-08", "pct": 33.45}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-09", "pct": 30.87}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-10", "pct": 30.79}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-11", "pct": 30.62}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2025-12", "pct": 27.3}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2026-01", "pct": 30.28}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2026-02", "pct": 27.4}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2026-03", "pct": 31.28}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2026-04", "pct": 28.04}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2026-05", "pct": 25.99}, {"client": "COMPLEJO R. EL PASO CONSORCIO", "month": "2026-06", "pct": 22.43}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-02", "pct": 28.35}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-03", "pct": 28.22}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-04", "pct": 26.26}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-05", "pct": 28.82}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-06", "pct": 27.37}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-07", "pct": 30.4}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-08", "pct": 26.42}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-09", "pct": 24.76}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-10", "pct": 27.73}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-11", "pct": 24.96}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2025-12", "pct": 25.2}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2026-01", "pct": 26.4}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2026-02", "pct": 22.33}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2026-03", "pct": 27.98}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2026-04", "pct": 26.13}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2026-05", "pct": 28.06}, {"client": "SUPERMERCADOS MAYORISTAS MAKRO S.A", "month": "2026-06", "pct": 28.88}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-02", "pct": 38.87}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-03", "pct": 33.42}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-04", "pct": 35.09}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-05", "pct": 33.83}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-06", "pct": 34.21}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-07", "pct": 35.41}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-08", "pct": 37.03}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-09", "pct": 36.88}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-10", "pct": 34.41}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-11", "pct": 37.39}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2025-12", "pct": 31.61}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2026-01", "pct": 36.35}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2026-02", "pct": 35.94}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2026-03", "pct": 34.69}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2026-04", "pct": 38.8}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2026-05", "pct": 36.34}, {"client": "TUBOS TRANS ELECTRIC SA", "month": "2026-06", "pct": 34.91}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-02", "pct": 25.43}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-03", "pct": 23.72}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-04", "pct": 22.7}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-05", "pct": 25.94}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-06", "pct": 22.39}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-07", "pct": 25.57}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-08", "pct": 25.4}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-09", "pct": 25.0}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-10", "pct": 24.34}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-11", "pct": 21.51}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2025-12", "pct": 20.76}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2026-01", "pct": 23.9}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2026-02", "pct": 20.56}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2026-03", "pct": 20.61}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2026-04", "pct": 18.15}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2026-05", "pct": 22.72}, {"client": "DISTRIBUIDORA DE GAS CUYANA SA", "month": "2026-06", "pct": 19.5}, {"client": "LITORAL GAS S.A.", "month": "2025-02", "pct": 31.6}, {"client": "LITORAL GAS S.A.", "month": "2025-03", "pct": 30.87}, {"client": "LITORAL GAS S.A.", "month": "2025-04", "pct": 30.99}, {"client": "LITORAL GAS S.A.", "month": "2025-05", "pct": 31.08}, {"client": "LITORAL GAS S.A.", "month": "2025-06", "pct": 27.11}, {"client": "LITORAL GAS S.A.", "month": "2025-07", "pct": 32.62}, {"client": "LITORAL GAS S.A.", "month": "2025-08", "pct": 31.5}, {"client": "LITORAL GAS S.A.", "month": "2025-09", "pct": 29.68}, {"client": "LITORAL GAS S.A.", "month": "2025-10", "pct": 34.73}, {"client": "LITORAL GAS S.A.", "month": "2025-11", "pct": 30.3}, {"client": "LITORAL GAS S.A.", "month": "2025-12", "pct": 30.6}, {"client": "LITORAL GAS S.A.", "month": "2026-01", "pct": 33.2}, {"client": "LITORAL GAS S.A.", "month": "2026-02", "pct": 29.18}, {"client": "LITORAL GAS S.A.", "month": "2026-03", "pct": 34.98}, {"client": "LITORAL GAS S.A.", "month": "2026-04", "pct": 31.47}, {"client": "LITORAL GAS S.A.", "month": "2026-05", "pct": 33.72}, {"client": "LITORAL GAS S.A.", "month": "2026-06", "pct": 30.62}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-02", "pct": 17.69}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-03", "pct": 18.78}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-04", "pct": 21.22}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-05", "pct": 19.65}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-06", "pct": 17.88}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-07", "pct": 23.62}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-08", "pct": 25.5}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-09", "pct": 18.12}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-10", "pct": 20.66}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-11", "pct": 19.97}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2025-12", "pct": 15.77}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2026-01", "pct": 22.48}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2026-02", "pct": 18.79}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2026-03", "pct": 19.62}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2026-04", "pct": 19.67}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2026-05", "pct": 21.07}, {"client": "ASOCIACION CIVIL LAS TEJAS DEL SUR", "month": "2026-06", "pct": 11.67}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-02", "pct": 23.27}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-03", "pct": 18.88}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-04", "pct": 22.57}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-05", "pct": 25.64}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-06", "pct": 23.17}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-07", "pct": 27.92}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-08", "pct": 27.69}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-09", "pct": 25.32}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-10", "pct": 22.93}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-11", "pct": 25.72}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2025-12", "pct": 22.38}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2026-01", "pct": 25.46}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2026-02", "pct": 19.69}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2026-03", "pct": 23.16}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2026-04", "pct": 12.56}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2026-05", "pct": 24.64}, {"client": "BAGLEY ARGENTINA S.A.", "month": "2026-06", "pct": 22.49}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-02", "pct": 42.99}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-03", "pct": 42.97}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-04", "pct": 44.21}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-05", "pct": 44.17}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-06", "pct": 41.19}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-07", "pct": 45.38}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-08", "pct": 44.25}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-09", "pct": 44.52}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-10", "pct": 41.87}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-11", "pct": 43.48}, {"client": "EDIFICIO CAPITALINAS", "month": "2025-12", "pct": 39.81}, {"client": "EDIFICIO CAPITALINAS", "month": "2026-01", "pct": 42.37}, {"client": "EDIFICIO CAPITALINAS", "month": "2026-02", "pct": 40.85}, {"client": "EDIFICIO CAPITALINAS", "month": "2026-03", "pct": 39.95}, {"client": "EDIFICIO CAPITALINAS", "month": "2026-04", "pct": 40.62}, {"client": "EDIFICIO CAPITALINAS", "month": "2026-05", "pct": 42.84}, {"client": "EDIFICIO CAPITALINAS", "month": "2026-06", "pct": 40.17}, {"client": "MERCOBEEF S.A", "month": "2025-02", "pct": 38.25}, {"client": "MERCOBEEF S.A", "month": "2025-03", "pct": 37.98}, {"client": "MERCOBEEF S.A", "month": "2025-04", "pct": 36.25}, {"client": "MERCOBEEF S.A", "month": "2025-05", "pct": 35.8}, {"client": "MERCOBEEF S.A", "month": "2025-06", "pct": 31.02}, {"client": "MERCOBEEF S.A", "month": "2025-07", "pct": 35.3}, {"client": "MERCOBEEF S.A", "month": "2025-08", "pct": 36.05}, {"client": "MERCOBEEF S.A", "month": "2025-09", "pct": 35.57}, {"client": "MERCOBEEF S.A", "month": "2025-10", "pct": 35.5}, {"client": "MERCOBEEF S.A", "month": "2025-11", "pct": 21.12}, {"client": "MERCOBEEF S.A", "month": "2025-12", "pct": 19.36}, {"client": "MERCOBEEF S.A", "month": "2026-01", "pct": 21.91}, {"client": "MERCOBEEF S.A", "month": "2026-02", "pct": 20.23}, {"client": "MERCOBEEF S.A", "month": "2026-03", "pct": 23.58}, {"client": "MERCOBEEF S.A", "month": "2026-04", "pct": 19.74}, {"client": "MERCOBEEF S.A", "month": "2026-05", "pct": 21.57}, {"client": "MERCOBEEF S.A", "month": "2026-06", "pct": 20.31}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-02", "pct": 24.93}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-03", "pct": 25.1}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-04", "pct": 22.94}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-05", "pct": 28.77}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-06", "pct": 21.16}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-07", "pct": 30.75}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-08", "pct": 27.97}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-09", "pct": 26.87}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-10", "pct": 32.59}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-11", "pct": 29.96}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2025-12", "pct": 27.23}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2026-01", "pct": 29.76}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2026-02", "pct": 25.95}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2026-03", "pct": 26.76}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2026-04", "pct": 24.77}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2026-05", "pct": 28.84}, {"client": "CARTOCOR SOCIEDAD ANONIMA", "month": "2026-06", "pct": 26.41}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-02", "pct": 34.92}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-03", "pct": 32.99}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-04", "pct": 34.96}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-05", "pct": 37.7}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-06", "pct": 33.63}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-07", "pct": 41.03}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-08", "pct": 38.98}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-09", "pct": 36.05}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-10", "pct": 36.57}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-11", "pct": 34.66}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2025-12", "pct": 33.34}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2026-01", "pct": 34.93}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2026-02", "pct": 30.46}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2026-03", "pct": 36.0}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2026-04", "pct": 33.52}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2026-05", "pct": 36.42}, {"client": "NUEVO PUERTO SANTA FE S.A", "month": "2026-06", "pct": 31.16}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-02", "pct": 28.33}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-03", "pct": 24.16}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-04", "pct": 26.86}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-05", "pct": 26.27}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-06", "pct": 24.06}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-07", "pct": 25.21}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-08", "pct": 25.55}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-09", "pct": 23.57}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-10", "pct": 20.15}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-11", "pct": 20.96}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2025-12", "pct": 18.72}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2026-01", "pct": 23.91}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2026-02", "pct": 20.19}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2026-03", "pct": 21.11}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2026-04", "pct": 19.99}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2026-05", "pct": 19.68}, {"client": "DISTRIBUIDORA DE GAS DEL CENTRO S.A.", "month": "2026-06", "pct": 16.83}];
+
+// Costos laborales por cliente y mes. Período completo: Ene-2025 a Jun-2026.
+const laborCostData = [{"client":"CENCOSUD S.A.","month":"2025-01","labor_total":535472186,"cost_per_hour":8465.25},{"client":"CENCOSUD S.A.","month":"2025-02","labor_total":528897484,"cost_per_hour":9083.68},{"client":"CENCOSUD S.A.","month":"2025-03","labor_total":579514011,"cost_per_hour":9285.41},{"client":"CENCOSUD S.A.","month":"2025-04","labor_total":532008128,"cost_per_hour":9545.83},{"client":"CENCOSUD S.A.","month":"2025-05","labor_total":523442375,"cost_per_hour":9237.16},{"client":"CENCOSUD S.A.","month":"2025-06","labor_total":534441989,"cost_per_hour":9645.29},{"client":"CENCOSUD S.A.","month":"2025-07","labor_total":514982381,"cost_per_hour":9386.23},{"client":"CENCOSUD S.A.","month":"2025-08","labor_total":525397070,"cost_per_hour":9591.08},{"client":"CENCOSUD S.A.","month":"2025-09","labor_total":519952783,"cost_per_hour":9953.49},{"client":"CENCOSUD S.A.","month":"2025-10","labor_total":544695420,"cost_per_hour":10104.87},{"client":"CENCOSUD S.A.","month":"2025-11","labor_total":537976770,"cost_per_hour":10410.4},{"client":"CENCOSUD S.A.","month":"2025-12","labor_total":571514714,"cost_per_hour":10892.11},{"client":"CENCOSUD S.A.","month":"2026-01","labor_total":562413943,"cost_per_hour":10639.67},{"client":"CENCOSUD S.A.","month":"2026-02","labor_total":558503539,"cost_per_hour":11569.53},{"client":"CENCOSUD S.A.","month":"2026-03","labor_total":584344725,"cost_per_hour":10908.42},{"client":"CENCOSUD S.A.","month":"2026-04","labor_total":598324553,"cost_per_hour":11481.07},{"client":"CENCOSUD S.A.","month":"2026-05","labor_total":593966141,"cost_per_hour":11204.13},{"client":"CENCOSUD S.A.","month":"2026-06","labor_total":627969921,"cost_per_hour":11926.77},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-01","labor_total":305582537,"cost_per_hour":8142.14},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-02","labor_total":295725005,"cost_per_hour":8759.37},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-03","labor_total":328013298,"cost_per_hour":8935.74},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-04","labor_total":326817112,"cost_per_hour":9130.12},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-05","labor_total":336638682,"cost_per_hour":9091.71},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-06","labor_total":342166013,"cost_per_hour":9450.01},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-07","labor_total":344673779,"cost_per_hour":9168.56},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-08","labor_total":360523311,"cost_per_hour":9432.35},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-09","labor_total":361805170,"cost_per_hour":9759.39},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-10","labor_total":348942984,"cost_per_hour":10066.15},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-11","labor_total":347789823,"cost_per_hour":10405.7},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2025-12","labor_total":383516324,"cost_per_hour":10642.59},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2026-01","labor_total":374380211,"cost_per_hour":10341.99},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2026-02","labor_total":366825281,"cost_per_hour":11255.07},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2026-03","labor_total":386272090,"cost_per_hour":10700.06},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2026-04","labor_total":389941894,"cost_per_hour":11136.74},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2026-05","labor_total":398842170,"cost_per_hour":11063.58},{"client":"EMP. PROV. ENERGIA SANTA FE","month":"2026-06","labor_total":414673222,"cost_per_hour":11835.97},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-01","labor_total":108883842,"cost_per_hour":8646.04},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-02","labor_total":107092683,"cost_per_hour":9399.04},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-03","labor_total":120402049,"cost_per_hour":9630.62},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-04","labor_total":118767466,"cost_per_hour":9809.01},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-05","labor_total":123085199,"cost_per_hour":9843.67},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-06","labor_total":125128285,"cost_per_hour":10334.35},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-07","labor_total":123968136,"cost_per_hour":9885.82},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-08","labor_total":127420636,"cost_per_hour":10170.06},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-09","labor_total":125803739,"cost_per_hour":10379.85},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-10","labor_total":132246075,"cost_per_hour":10545.81},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-11","labor_total":133551695,"cost_per_hour":11030.04},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2025-12","labor_total":147621915,"cost_per_hour":11755.21},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2026-01","labor_total":140328731,"cost_per_hour":11142.51},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2026-02","labor_total":137961622,"cost_per_hour":12140.23},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2026-03","labor_total":145626804,"cost_per_hour":11635.25},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2026-04","labor_total":145764727,"cost_per_hour":12026.79},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2026-05","labor_total":150272299,"cost_per_hour":12017.94},{"client":"SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A","month":"2026-06","labor_total":155384700,"cost_per_hour":12807.84},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-01","labor_total":118746017,"cost_per_hour":8473.23},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-02","labor_total":116617806,"cost_per_hour":8941.54},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-03","labor_total":122239291,"cost_per_hour":9320.57},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-04","labor_total":111446726,"cost_per_hour":9473.14},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-05","labor_total":117067135,"cost_per_hour":9472.39},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-06","labor_total":117864546,"cost_per_hour":9890.16},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-07","labor_total":118094556,"cost_per_hour":9460.61},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-08","labor_total":124751767,"cost_per_hour":10005.74},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-09","labor_total":120875247,"cost_per_hour":10009.46},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-10","labor_total":127802740,"cost_per_hour":10478.01},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-11","labor_total":124829395,"cost_per_hour":10634.37},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2025-12","labor_total":135860013,"cost_per_hour":10741.96},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2026-01","labor_total":137392005,"cost_per_hour":10898.94},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2026-02","labor_total":127367598,"cost_per_hour":11957.71},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2026-03","labor_total":131845585,"cost_per_hour":11157.75},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2026-04","labor_total":133934628,"cost_per_hour":11092.81},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2026-05","labor_total":136819525,"cost_per_hour":11318.37},{"client":"EMBOTELLADORA DEL ATLANTICO S.A.","month":"2026-06","labor_total":147032299,"cost_per_hour":12324.92},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-01","labor_total":90215427,"cost_per_hour":8195.81},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-02","labor_total":91340947,"cost_per_hour":9025.34},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-03","labor_total":100722270,"cost_per_hour":8898.91},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-04","labor_total":102312316,"cost_per_hour":9309.58},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-05","labor_total":101317947,"cost_per_hour":9053.52},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-06","labor_total":103184740,"cost_per_hour":9359.58},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-07","labor_total":101891913,"cost_per_hour":8852.47},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-08","labor_total":106646876,"cost_per_hour":9216.34},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-09","labor_total":108832697,"cost_per_hour":9710.27},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-10","labor_total":114538835,"cost_per_hour":9894.08},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-11","labor_total":115504268,"cost_per_hour":10212.58},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2025-12","labor_total":118438831,"cost_per_hour":10427.33},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2026-01","labor_total":118599551,"cost_per_hour":10361.66},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2026-02","labor_total":119644464,"cost_per_hour":11343.93},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2026-03","labor_total":122994819,"cost_per_hour":10675.71},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2026-04","labor_total":125120235,"cost_per_hour":11093.2},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2026-05","labor_total":127773497,"cost_per_hour":10867.87},{"client":"IRSA INVERSIONES Y REPRESENTACIONES S.A.","month":"2026-06","labor_total":136441027,"cost_per_hour":11725.77},{"client":"ARCOR SAIC","month":"2025-01","labor_total":98821678,"cost_per_hour":8732.92},{"client":"ARCOR SAIC","month":"2025-02","labor_total":99334548,"cost_per_hour":9645.07},{"client":"ARCOR SAIC","month":"2025-03","labor_total":105115682,"cost_per_hour":9658.7},{"client":"ARCOR SAIC","month":"2025-04","labor_total":107140802,"cost_per_hour":9852.03},{"client":"ARCOR SAIC","month":"2025-05","labor_total":105712656,"cost_per_hour":9748.04},{"client":"ARCOR SAIC","month":"2025-06","labor_total":107539039,"cost_per_hour":10227.2},{"client":"ARCOR SAIC","month":"2025-07","labor_total":109974373,"cost_per_hour":9790.29},{"client":"ARCOR SAIC","month":"2025-08","labor_total":112873765,"cost_per_hour":10237.05},{"client":"ARCOR SAIC","month":"2025-09","labor_total":110642583,"cost_per_hour":10445.37},{"client":"ARCOR SAIC","month":"2025-10","labor_total":118372246,"cost_per_hour":10814.7},{"client":"ARCOR SAIC","month":"2025-11","labor_total":114563197,"cost_per_hour":11278.68},{"client":"ARCOR SAIC","month":"2025-12","labor_total":125329727,"cost_per_hour":12060.21},{"client":"ARCOR SAIC","month":"2026-01","labor_total":117240687,"cost_per_hour":11414.17},{"client":"ARCOR SAIC","month":"2026-02","labor_total":116118038,"cost_per_hour":12340.51},{"client":"ARCOR SAIC","month":"2026-03","labor_total":121079572,"cost_per_hour":11906.15},{"client":"ARCOR SAIC","month":"2026-04","labor_total":126937253,"cost_per_hour":12613.42},{"client":"ARCOR SAIC","month":"2026-05","labor_total":127741248,"cost_per_hour":12449.5},{"client":"ARCOR SAIC","month":"2026-06","labor_total":129997973,"cost_per_hour":12928.05},{"client":"BANCO MACRO SA","month":"2025-01","labor_total":98932641,"cost_per_hour":8155.62},{"client":"BANCO MACRO SA","month":"2025-02","labor_total":100050897,"cost_per_hour":9001.8},{"client":"BANCO MACRO SA","month":"2025-03","labor_total":94930205,"cost_per_hour":9189.19},{"client":"BANCO MACRO SA","month":"2025-04","labor_total":95778224,"cost_per_hour":9078.41},{"client":"BANCO MACRO SA","month":"2025-05","labor_total":101032445,"cost_per_hour":9091.79},{"client":"BANCO MACRO SA","month":"2025-06","labor_total":105383920,"cost_per_hour":9436.52},{"client":"BANCO MACRO SA","month":"2025-07","labor_total":112395484,"cost_per_hour":8857.23},{"client":"BANCO MACRO SA","month":"2025-08","labor_total":108790976,"cost_per_hour":9509.35},{"client":"BANCO MACRO SA","month":"2025-09","labor_total":116140970,"cost_per_hour":9881.6},{"client":"BANCO MACRO SA","month":"2025-10","labor_total":109063710,"cost_per_hour":9979.18},{"client":"BANCO MACRO SA","month":"2025-11","labor_total":89427050,"cost_per_hour":10565.59},{"client":"BANCO MACRO SA","month":"2025-12","labor_total":102235811,"cost_per_hour":10780.16},{"client":"BANCO MACRO SA","month":"2026-01","labor_total":104410310,"cost_per_hour":10569.98},{"client":"BANCO MACRO SA","month":"2026-02","labor_total":96877497,"cost_per_hour":11476.23},{"client":"BANCO MACRO SA","month":"2026-03","labor_total":99414066,"cost_per_hour":11185.52},{"client":"BANCO MACRO SA","month":"2026-04","labor_total":100142949,"cost_per_hour":11500.69},{"client":"BANCO MACRO SA","month":"2026-05","labor_total":95753503,"cost_per_hour":11505.16},{"client":"BANCO MACRO SA","month":"2026-06","labor_total":103755464,"cost_per_hour":12018.58},{"client":"SIPAR ACEROS S.A","month":"2025-01","labor_total":88510517,"cost_per_hour":8400.77},{"client":"SIPAR ACEROS S.A","month":"2025-02","labor_total":84116763,"cost_per_hour":8791.47},{"client":"SIPAR ACEROS S.A","month":"2025-03","labor_total":96129967,"cost_per_hour":9065.02},{"client":"SIPAR ACEROS S.A","month":"2025-04","labor_total":94619194,"cost_per_hour":8950.83},{"client":"SIPAR ACEROS S.A","month":"2025-05","labor_total":97543884,"cost_per_hour":9080.61},{"client":"SIPAR ACEROS S.A","month":"2025-06","labor_total":96156736,"cost_per_hour":9346.49},{"client":"SIPAR ACEROS S.A","month":"2025-07","labor_total":97088419,"cost_per_hour":9235.96},{"client":"SIPAR ACEROS S.A","month":"2025-08","labor_total":97457583,"cost_per_hour":9308.27},{"client":"SIPAR ACEROS S.A","month":"2025-09","labor_total":89327544,"cost_per_hour":9764.97},{"client":"SIPAR ACEROS S.A","month":"2025-10","labor_total":93312582,"cost_per_hour":10135.51},{"client":"SIPAR ACEROS S.A","month":"2025-11","labor_total":90353410,"cost_per_hour":10329.65},{"client":"SIPAR ACEROS S.A","month":"2025-12","labor_total":98342100,"cost_per_hour":10928.11},{"client":"SIPAR ACEROS S.A","month":"2026-01","labor_total":95937952,"cost_per_hour":10632.01},{"client":"SIPAR ACEROS S.A","month":"2026-02","labor_total":92690297,"cost_per_hour":11307.83},{"client":"SIPAR ACEROS S.A","month":"2026-03","labor_total":99171979,"cost_per_hour":10901.61},{"client":"SIPAR ACEROS S.A","month":"2026-04","labor_total":98770658,"cost_per_hour":11199.76},{"client":"SIPAR ACEROS S.A","month":"2026-05","labor_total":100418905,"cost_per_hour":11134.15},{"client":"SIPAR ACEROS S.A","month":"2026-06","labor_total":102337427,"cost_per_hour":11562.9},{"client":"LIBERTAD S. A.","month":"2025-01","labor_total":73034768,"cost_per_hour":8189.13},{"client":"LIBERTAD S. A.","month":"2025-02","labor_total":72597257,"cost_per_hour":8787.95},{"client":"LIBERTAD S. A.","month":"2025-03","labor_total":78889012,"cost_per_hour":9109.06},{"client":"LIBERTAD S. A.","month":"2025-04","labor_total":77434079,"cost_per_hour":9631.1},{"client":"LIBERTAD S. A.","month":"2025-05","labor_total":73957584,"cost_per_hour":9235.46},{"client":"LIBERTAD S. A.","month":"2025-06","labor_total":75394528,"cost_per_hour":9462.76},{"client":"LIBERTAD S. A.","month":"2025-07","labor_total":79367794,"cost_per_hour":9313.28},{"client":"LIBERTAD S. A.","month":"2025-08","labor_total":76316936,"cost_per_hour":9573.72},{"client":"LIBERTAD S. A.","month":"2025-09","labor_total":80100741,"cost_per_hour":9784.49},{"client":"LIBERTAD S. A.","month":"2025-10","labor_total":94949115,"cost_per_hour":9869.46},{"client":"LIBERTAD S. A.","month":"2025-11","labor_total":101742827,"cost_per_hour":10073.55},{"client":"LIBERTAD S. A.","month":"2025-12","labor_total":119623791,"cost_per_hour":10541.4},{"client":"LIBERTAD S. A.","month":"2026-01","labor_total":118898280,"cost_per_hour":10325.06},{"client":"LIBERTAD S. A.","month":"2026-02","labor_total":123468745,"cost_per_hour":11089.84},{"client":"LIBERTAD S. A.","month":"2026-03","labor_total":127113375,"cost_per_hour":10704.73},{"client":"LIBERTAD S. A.","month":"2026-04","labor_total":129243835,"cost_per_hour":11072.98},{"client":"LIBERTAD S. A.","month":"2026-05","labor_total":125614380,"cost_per_hour":10966.86},{"client":"LIBERTAD S. A.","month":"2026-06","labor_total":6527558,"cost_per_hour":null},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-01","labor_total":156494996,"cost_per_hour":8788.64},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-02","labor_total":151468191,"cost_per_hour":9171.69},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-03","labor_total":158196652,"cost_per_hour":9637.32},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-04","labor_total":161840815,"cost_per_hour":9773.73},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-05","labor_total":167607305,"cost_per_hour":9656.33},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-06","labor_total":166868773,"cost_per_hour":10037.52},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-07","labor_total":176142464,"cost_per_hour":9680.95},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-08","labor_total":159816117,"cost_per_hour":10312.05},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-09","labor_total":143775492,"cost_per_hour":10410.78},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-10","labor_total":-2102070,"cost_per_hour":null},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-11","labor_total":4381826,"cost_per_hour":null},{"client":"BANCO DE LA PROVINCIA DE CORDOBA SA","month":"2025-12","labor_total":75887,"cost_per_hour":null},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-01","labor_total":61646920,"cost_per_hour":8857.32},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-02","labor_total":64308799,"cost_per_hour":9825.64},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-03","labor_total":69738061,"cost_per_hour":9952.63},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-04","labor_total":71022903,"cost_per_hour":10178.12},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-05","labor_total":75702703,"cost_per_hour":9844.3},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-06","labor_total":80326651,"cost_per_hour":10522.91},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-07","labor_total":79344261,"cost_per_hour":9791.96},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-08","labor_total":83282372,"cost_per_hour":10228.11},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-09","labor_total":86426331,"cost_per_hour":10777.49},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-10","labor_total":90845740,"cost_per_hour":10974.36},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-11","labor_total":88917832,"cost_per_hour":11244.04},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2025-12","labor_total":101792708,"cost_per_hour":11904.19},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2026-01","labor_total":102087730,"cost_per_hour":11614.08},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2026-02","labor_total":103664442,"cost_per_hour":12763.41},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2026-03","labor_total":6053525,"cost_per_hour":null},{"client":"UNIVERSIDAD CATOLICA DE CORDOBA","month":"2026-04","labor_total":7256951,"cost_per_hour":null},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-01","labor_total":55206677,"cost_per_hour":7422.25},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-02","labor_total":54116663,"cost_per_hour":7896.78},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-03","labor_total":58751065,"cost_per_hour":7904.09},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-04","labor_total":61348769,"cost_per_hour":8461.32},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-05","labor_total":59154533,"cost_per_hour":8495.55},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-06","labor_total":59973837,"cost_per_hour":9040.37},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-07","labor_total":62240642,"cost_per_hour":8877.57},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-08","labor_total":63707416,"cost_per_hour":8856.86},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-09","labor_total":60522669,"cost_per_hour":9046.74},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-10","labor_total":61909845,"cost_per_hour":9140.68},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-11","labor_total":60357538,"cost_per_hour":9096.84},{"client":"ARCOS DEL GOURMET S.A.","month":"2025-12","labor_total":66841661,"cost_per_hour":9685.79},{"client":"ARCOS DEL GOURMET S.A.","month":"2026-01","labor_total":66685070,"cost_per_hour":9685.56},{"client":"ARCOS DEL GOURMET S.A.","month":"2026-02","labor_total":67772531,"cost_per_hour":10693.05},{"client":"ARCOS DEL GOURMET S.A.","month":"2026-03","labor_total":68770445,"cost_per_hour":9739.48},{"client":"ARCOS DEL GOURMET S.A.","month":"2026-04","labor_total":70121114,"cost_per_hour":10391.39},{"client":"ARCOS DEL GOURMET S.A.","month":"2026-05","labor_total":73549977,"cost_per_hour":10607.15},{"client":"ARCOS DEL GOURMET S.A.","month":"2026-06","labor_total":74765784,"cost_per_hour":11020.9},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-01","labor_total":109105212,"cost_per_hour":7837.41},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-02","labor_total":107277196,"cost_per_hour":8168.83},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-03","labor_total":110753263,"cost_per_hour":8527.19},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-04","labor_total":108238306,"cost_per_hour":8689.42},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-05","labor_total":105497656,"cost_per_hour":8537.83},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-06","labor_total":113499364,"cost_per_hour":8906.1},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-07","labor_total":113156216,"cost_per_hour":8433.17},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-08","labor_total":114316411,"cost_per_hour":8603.3},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-09","labor_total":78123067,"cost_per_hour":9132.93},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-10","labor_total":55199558,"cost_per_hour":9641.84},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-11","labor_total":56031150,"cost_per_hour":9842.11},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2025-12","labor_total":58055216,"cost_per_hour":10276.17},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2026-01","labor_total":56707713,"cost_per_hour":9697.77},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2026-02","labor_total":56192210,"cost_per_hour":10487.53},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2026-03","labor_total":3407331,"cost_per_hour":10834.12},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2026-04","labor_total":3274727,"cost_per_hour":10915.76},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2026-05","labor_total":3391666,"cost_per_hour":10940.86},{"client":"LA GALLEGA SUPERMERCADOS S.A","month":"2026-06","labor_total":3489402,"cost_per_hour":11631.34},{"client":"BANCO NACION ARGENTINA","month":"2025-01","labor_total":56480858,"cost_per_hour":7450.81},{"client":"BANCO NACION ARGENTINA","month":"2025-02","labor_total":55453044,"cost_per_hour":8045.22},{"client":"BANCO NACION ARGENTINA","month":"2025-03","labor_total":51289079,"cost_per_hour":8219.07},{"client":"BANCO NACION ARGENTINA","month":"2025-04","labor_total":55348692,"cost_per_hour":8514.86},{"client":"BANCO NACION ARGENTINA","month":"2025-05","labor_total":57644166,"cost_per_hour":8214.93},{"client":"BANCO NACION ARGENTINA","month":"2025-06","labor_total":59157431,"cost_per_hour":9037.19},{"client":"BANCO NACION ARGENTINA","month":"2025-07","labor_total":59052960,"cost_per_hour":8112.23},{"client":"BANCO NACION ARGENTINA","month":"2025-08","labor_total":57356747,"cost_per_hour":8691.73},{"client":"BANCO NACION ARGENTINA","month":"2025-09","labor_total":63603229,"cost_per_hour":8796.52},{"client":"BANCO NACION ARGENTINA","month":"2025-10","labor_total":63429033,"cost_per_hour":9002.13},{"client":"BANCO NACION ARGENTINA","month":"2025-11","labor_total":55010502,"cost_per_hour":9832.96},{"client":"BANCO NACION ARGENTINA","month":"2025-12","labor_total":61628286,"cost_per_hour":9743.6},{"client":"BANCO NACION ARGENTINA","month":"2026-01","labor_total":66564676,"cost_per_hour":9605.29},{"client":"BANCO NACION ARGENTINA","month":"2026-02","labor_total":63142088,"cost_per_hour":10456.58},{"client":"BANCO NACION ARGENTINA","month":"2026-03","labor_total":68890745,"cost_per_hour":10108.69},{"client":"BANCO NACION ARGENTINA","month":"2026-04","labor_total":69012089,"cost_per_hour":10274.38},{"client":"BANCO NACION ARGENTINA","month":"2026-05","labor_total":64697749,"cost_per_hour":10280.91},{"client":"BANCO NACION ARGENTINA","month":"2026-06","labor_total":74502079,"cost_per_hour":10774.76},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-01","labor_total":60714836,"cost_per_hour":9138.98},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-02","labor_total":57799102,"cost_per_hour":10211.86},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-03","labor_total":53008107,"cost_per_hour":10178.21},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-04","labor_total":61589510,"cost_per_hour":10474.41},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-05","labor_total":64820490,"cost_per_hour":10128.2},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-06","labor_total":63429404,"cost_per_hour":11012.05},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-07","labor_total":62101856,"cost_per_hour":10433.78},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-08","labor_total":63038469,"cost_per_hour":10591.14},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-09","labor_total":63798182,"cost_per_hour":11076.07},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-10","labor_total":66092257,"cost_per_hour":11119.15},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-11","labor_total":66568943,"cost_per_hour":11557.11},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2025-12","labor_total":73215148,"cost_per_hour":12338.25},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2026-01","labor_total":71424055,"cost_per_hour":11876.3},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2026-02","labor_total":73718922,"cost_per_hour":13297.06},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2026-03","labor_total":75290710,"cost_per_hour":12266.33},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2026-04","labor_total":76129442,"cost_per_hour":12816.4},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2026-05","labor_total":74139212,"cost_per_hour":12456.18},{"client":"CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO","month":"2026-06","labor_total":76207426,"cost_per_hour":13248.86},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-01","labor_total":39093532,"cost_per_hour":9069.37},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-02","labor_total":35818113,"cost_per_hour":9226.72},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-03","labor_total":40930982,"cost_per_hour":9647.84},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-04","labor_total":41890575,"cost_per_hour":10100.2},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-05","labor_total":42844646,"cost_per_hour":9958.08},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-06","labor_total":42386000,"cost_per_hour":10289.11},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-07","labor_total":44562103,"cost_per_hour":10398.95},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-08","labor_total":44193588,"cost_per_hour":10271.61},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-09","labor_total":44746565,"cost_per_hour":10764.15},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-10","labor_total":47833654,"cost_per_hour":11081.58},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-11","labor_total":46466785,"cost_per_hour":11171.24},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2025-12","labor_total":51719322,"cost_per_hour":11970.68},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2026-01","labor_total":50235574,"cost_per_hour":11665.06},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2026-02","labor_total":47747102,"cost_per_hour":12337.75},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2026-03","labor_total":50199798,"cost_per_hour":11744.02},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2026-04","labor_total":51689280,"cost_per_hour":12422.32},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2026-05","labor_total":53627204,"cost_per_hour":12136.97},{"client":"COMPLEJO R. EL PASO CONSORCIO","month":"2026-06","labor_total":63623965,"cost_per_hour":12549.11},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-01","labor_total":38305213,"cost_per_hour":8179.63},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-02","labor_total":37205853,"cost_per_hour":8824.92},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-03","labor_total":41384365,"cost_per_hour":8835.26},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-04","labor_total":42133399,"cost_per_hour":9234.72},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-05","labor_total":43199077,"cost_per_hour":9000.75},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-06","labor_total":42493165,"cost_per_hour":9197.65},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-07","labor_total":41272381,"cost_per_hour":9057.91},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-08","labor_total":42550389,"cost_per_hour":9598.55},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-09","labor_total":41938346,"cost_per_hour":10182.92},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-10","labor_total":42655761,"cost_per_hour":10001.35},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-11","labor_total":42213124,"cost_per_hour":10443.62},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2025-12","labor_total":44888922,"cost_per_hour":10629.63},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2026-01","labor_total":44236003,"cost_per_hour":10502.37},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2026-02","labor_total":42024265,"cost_per_hour":11233.43},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2026-03","labor_total":47414736,"cost_per_hour":10345.79},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2026-04","labor_total":52194362,"cost_per_hour":10748.43},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2026-05","labor_total":53089093,"cost_per_hour":10766.39},{"client":"SUPERMERCADOS MAYORISTAS MAKRO S.A","month":"2026-06","labor_total":54996483,"cost_per_hour":11198.63},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-01","labor_total":32050397,"cost_per_hour":8606.44},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-02","labor_total":31865870,"cost_per_hour":9476.84},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-03","labor_total":36165529,"cost_per_hour":9688.5},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-04","labor_total":35485496,"cost_per_hour":9842.05},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-05","labor_total":36596252,"cost_per_hour":9837.7},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-06","labor_total":36478633,"cost_per_hour":10117.5},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-07","labor_total":36756052,"cost_per_hour":9880.66},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-08","labor_total":36873593,"cost_per_hour":9912.26},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-09","labor_total":37046526,"cost_per_hour":10290.7},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-10","labor_total":39844845,"cost_per_hour":10710.98},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-11","labor_total":37996065,"cost_per_hour":10554.46},{"client":"TUBOS TRANS ELECTRIC SA","month":"2025-12","labor_total":42723074,"cost_per_hour":11484.7},{"client":"TUBOS TRANS ELECTRIC SA","month":"2026-01","labor_total":35114660,"cost_per_hour":10837.86},{"client":"TUBOS TRANS ELECTRIC SA","month":"2026-02","labor_total":32918669,"cost_per_hour":12246.53},{"client":"TUBOS TRANS ELECTRIC SA","month":"2026-03","labor_total":33755440,"cost_per_hour":11342.55},{"client":"TUBOS TRANS ELECTRIC SA","month":"2026-04","labor_total":33256204,"cost_per_hour":11461.73},{"client":"TUBOS TRANS ELECTRIC SA","month":"2026-05","labor_total":30895304,"cost_per_hour":11442.71},{"client":"TUBOS TRANS ELECTRIC SA","month":"2026-06","labor_total":29784731,"cost_per_hour":12348.56},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-01","labor_total":32903141,"cost_per_hour":8495.52},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-02","labor_total":31152943,"cost_per_hour":8911.02},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-03","labor_total":35365905,"cost_per_hour":9212.27},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-04","labor_total":35621916,"cost_per_hour":9556.52},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-05","labor_total":35657249,"cost_per_hour":9247.21},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-06","labor_total":36375949,"cost_per_hour":9758.81},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-07","labor_total":37338215,"cost_per_hour":9661.85},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-08","labor_total":38204410,"cost_per_hour":9885.99},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-09","labor_total":37815681,"cost_per_hour":10098.99},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-10","labor_total":40284578,"cost_per_hour":10433.72},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-11","labor_total":40590639,"cost_per_hour":10889.51},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2025-12","labor_total":43196654,"cost_per_hour":11227.2},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2026-01","labor_total":42397972,"cost_per_hour":10971.14},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2026-02","labor_total":40542254,"cost_per_hour":11625.02},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2026-03","labor_total":44752483,"cost_per_hour":11634.96},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2026-04","labor_total":45456331,"cost_per_hour":12167.67},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2026-05","labor_total":45052515,"cost_per_hour":11685.26},{"client":"DISTRIBUIDORA DE GAS CUYANA SA","month":"2026-06","labor_total":47081657,"cost_per_hour":12574.15},{"client":"LITORAL GAS S.A.","month":"2025-01","labor_total":33621117,"cost_per_hour":8074.24},{"client":"LITORAL GAS S.A.","month":"2025-02","labor_total":33133851,"cost_per_hour":8655.66},{"client":"LITORAL GAS S.A.","month":"2025-03","labor_total":36553370,"cost_per_hour":8807.51},{"client":"LITORAL GAS S.A.","month":"2025-04","labor_total":36096050,"cost_per_hour":8985.82},{"client":"LITORAL GAS S.A.","month":"2025-05","labor_total":37867874,"cost_per_hour":9134.69},{"client":"LITORAL GAS S.A.","month":"2025-06","labor_total":38190607,"cost_per_hour":9690.59},{"client":"LITORAL GAS S.A.","month":"2025-07","labor_total":37242666,"cost_per_hour":9164.04},{"client":"LITORAL GAS S.A.","month":"2025-08","labor_total":32946501,"cost_per_hour":9513.86},{"client":"LITORAL GAS S.A.","month":"2025-09","labor_total":33652431,"cost_per_hour":10021.57},{"client":"LITORAL GAS S.A.","month":"2025-10","labor_total":33096700,"cost_per_hour":9516.01},{"client":"LITORAL GAS S.A.","month":"2025-11","labor_total":35714066,"cost_per_hour":10265.61},{"client":"LITORAL GAS S.A.","month":"2025-12","labor_total":36264141,"cost_per_hour":10417.74},{"client":"LITORAL GAS S.A.","month":"2026-01","labor_total":36179702,"cost_per_hour":10278.32},{"client":"LITORAL GAS S.A.","month":"2026-02","labor_total":34963237,"cost_per_hour":11078.34},{"client":"LITORAL GAS S.A.","month":"2026-03","labor_total":38501311,"cost_per_hour":10571.47},{"client":"LITORAL GAS S.A.","month":"2026-04","labor_total":36576868,"cost_per_hour":11010.5},{"client":"LITORAL GAS S.A.","month":"2026-05","labor_total":37376377,"cost_per_hour":10808.67},{"client":"LITORAL GAS S.A.","month":"2026-06","labor_total":38450455,"cost_per_hour":11612.94},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-01","labor_total":34154786,"cost_per_hour":9497.99},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-02","labor_total":34177802,"cost_per_hour":10522.72},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-03","labor_total":37339490,"cost_per_hour":10383.62},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-04","labor_total":36602956,"cost_per_hour":10518.09},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-05","labor_total":38577295,"cost_per_hour":10727.84},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-06","labor_total":38151564,"cost_per_hour":10963.09},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-07","labor_total":37730684,"cost_per_hour":10492.4},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-08","labor_total":37864490,"cost_per_hour":10529.61},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-09","labor_total":40631161,"cost_per_hour":11675.62},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-10","labor_total":41836073,"cost_per_hour":11634.06},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-11","labor_total":41067433,"cost_per_hour":11800.99},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2025-12","labor_total":45672248,"cost_per_hour":12700.85},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2026-01","labor_total":42708719,"cost_per_hour":11876.73},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2026-02","labor_total":40834626,"cost_per_hour":12650.13},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2026-03","labor_total":45234414,"cost_per_hour":12579.09},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2026-04","labor_total":44185592,"cost_per_hour":12697.01},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2026-05","labor_total":45451863,"cost_per_hour":12639.56},{"client":"ASOCIACION CIVIL LAS TEJAS DEL SUR","month":"2026-06","labor_total":51088417,"cost_per_hour":14680.58},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-01","labor_total":34012928,"cost_per_hour":9042.38},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-02","labor_total":34659139,"cost_per_hour":9783.81},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-03","labor_total":29532386,"cost_per_hour":10923.76},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-04","labor_total":29839213,"cost_per_hour":10424.18},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-05","labor_total":28784568,"cost_per_hour":10156.87},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-06","labor_total":29354340,"cost_per_hour":10689.85},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-07","labor_total":31153763,"cost_per_hour":10216.02},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-08","labor_total":30829680,"cost_per_hour":10433.06},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-09","labor_total":29369142,"cost_per_hour":10903.71},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-10","labor_total":31484588,"cost_per_hour":11473.98},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-11","labor_total":30514540,"cost_per_hour":11443.67},{"client":"BAGLEY ARGENTINA S.A.","month":"2025-12","labor_total":36822083,"cost_per_hour":11996.12},{"client":"BAGLEY ARGENTINA S.A.","month":"2026-01","labor_total":36401209,"cost_per_hour":11717.76},{"client":"BAGLEY ARGENTINA S.A.","month":"2026-02","labor_total":38669764,"cost_per_hour":12697.34},{"client":"BAGLEY ARGENTINA S.A.","month":"2026-03","labor_total":34791944,"cost_per_hour":12366.07},{"client":"BAGLEY ARGENTINA S.A.","month":"2026-04","labor_total":38339339,"cost_per_hour":14425.54},{"client":"BAGLEY ARGENTINA S.A.","month":"2026-05","labor_total":34465195,"cost_per_hour":12579.69},{"client":"BAGLEY ARGENTINA S.A.","month":"2026-06","labor_total":37746056,"cost_per_hour":13150.93},{"client":"EDIFICIO CAPITALINAS","month":"2025-01","labor_total":19996445,"cost_per_hour":7786.78},{"client":"EDIFICIO CAPITALINAS","month":"2025-02","labor_total":19782360,"cost_per_hour":8497.58},{"client":"EDIFICIO CAPITALINAS","month":"2025-03","labor_total":20334414,"cost_per_hour":8536.7},{"client":"EDIFICIO CAPITALINAS","month":"2025-04","labor_total":21586163,"cost_per_hour":8460.19},{"client":"EDIFICIO CAPITALINAS","month":"2025-05","labor_total":22682721,"cost_per_hour":8687.37},{"client":"EDIFICIO CAPITALINAS","month":"2025-06","labor_total":23320456,"cost_per_hour":9152.46},{"client":"EDIFICIO CAPITALINAS","month":"2025-07","labor_total":23180351,"cost_per_hour":8740.71},{"client":"EDIFICIO CAPITALINAS","month":"2025-08","labor_total":24024032,"cost_per_hour":9183.5},{"client":"EDIFICIO CAPITALINAS","month":"2025-09","labor_total":24217831,"cost_per_hour":9208.3},{"client":"EDIFICIO CAPITALINAS","month":"2025-10","labor_total":27309677,"cost_per_hour":9938.02},{"client":"EDIFICIO CAPITALINAS","month":"2025-11","labor_total":23361866,"cost_per_hour":9726.01},{"client":"EDIFICIO CAPITALINAS","month":"2025-12","labor_total":26317128,"cost_per_hour":10590.39},{"client":"EDIFICIO CAPITALINAS","month":"2026-01","labor_total":26116521,"cost_per_hour":10298.31},{"client":"EDIFICIO CAPITALINAS","month":"2026-02","labor_total":24058812,"cost_per_hour":10740.54},{"client":"EDIFICIO CAPITALINAS","month":"2026-03","labor_total":26431727,"cost_per_hour":10570.58},{"client":"EDIFICIO CAPITALINAS","month":"2026-04","labor_total":26988910,"cost_per_hour":10939.97},{"client":"EDIFICIO CAPITALINAS","month":"2026-05","labor_total":26074585,"cost_per_hour":10686.31},{"client":"EDIFICIO CAPITALINAS","month":"2026-06","labor_total":28830789,"cost_per_hour":11395.57},{"client":"MERCOBEEF S.A","month":"2025-01","labor_total":23383280,"cost_per_hour":8339.26},{"client":"MERCOBEEF S.A","month":"2025-02","labor_total":22997773,"cost_per_hour":9025.81},{"client":"MERCOBEEF S.A","month":"2025-03","labor_total":24999821,"cost_per_hour":9114.04},{"client":"MERCOBEEF S.A","month":"2025-04","labor_total":25220769,"cost_per_hour":9367.05},{"client":"MERCOBEEF S.A","month":"2025-05","labor_total":26329360,"cost_per_hour":9435.36},{"client":"MERCOBEEF S.A","month":"2025-06","labor_total":27169874,"cost_per_hour":10138.01},{"client":"MERCOBEEF S.A","month":"2025-07","labor_total":27432452,"cost_per_hour":9783.33},{"client":"MERCOBEEF S.A","month":"2025-08","labor_total":27770052,"cost_per_hour":9949.86},{"client":"MERCOBEEF S.A","month":"2025-09","labor_total":27549649,"cost_per_hour":10113.67},{"client":"MERCOBEEF S.A","month":"2025-10","labor_total":29192219,"cost_per_hour":10410.92},{"client":"MERCOBEEF S.A","month":"2025-11","labor_total":29035117,"cost_per_hour":10838.04},{"client":"MERCOBEEF S.A","month":"2025-12","labor_total":31508015,"cost_per_hour":11329.74},{"client":"MERCOBEEF S.A","month":"2026-01","labor_total":31114987,"cost_per_hour":11148.33},{"client":"MERCOBEEF S.A","month":"2026-02","labor_total":29113794,"cost_per_hour":11553.09},{"client":"MERCOBEEF S.A","month":"2026-03","labor_total":30980383,"cost_per_hour":11144.02},{"client":"MERCOBEEF S.A","month":"2026-04","labor_total":30013003,"cost_per_hour":11820.8},{"client":"MERCOBEEF S.A","month":"2026-05","labor_total":30336235,"cost_per_hour":11703.79},{"client":"MERCOBEEF S.A","month":"2026-06","labor_total":31201200,"cost_per_hour":12342.25},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-01","labor_total":17237261,"cost_per_hour":8973.07},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-02","labor_total":16792464,"cost_per_hour":9723.49},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-03","labor_total":18248348,"cost_per_hour":9826.79},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-04","labor_total":16933041,"cost_per_hour":10334.48},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-05","labor_total":15923376,"cost_per_hour":9694.6},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-06","labor_total":17795564,"cost_per_hour":10726.68},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-07","labor_total":15311258,"cost_per_hour":9644.89},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-08","labor_total":17135184,"cost_per_hour":10288.31},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-09","labor_total":18323828,"cost_per_hour":10647.2},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-10","labor_total":17109685,"cost_per_hour":10070.44},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-11","labor_total":17202058,"cost_per_hour":10537.25},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2025-12","labor_total":41633393,"cost_per_hour":10941.76},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2026-01","labor_total":39197581,"cost_per_hour":10768.57},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2026-02","labor_total":39730593,"cost_per_hour":11544.56},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2026-03","labor_total":43729473,"cost_per_hour":11497.17},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2026-04","labor_total":44204249,"cost_per_hour":11930.97},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2026-05","labor_total":42378899,"cost_per_hour":11423.28},{"client":"CARTOCOR SOCIEDAD ANONIMA","month":"2026-06","labor_total":43997499,"cost_per_hour":11929.91},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-01","labor_total":15450528,"cost_per_hour":8123.31},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-02","labor_total":14983583,"cost_per_hour":8631.1},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-03","labor_total":17159276,"cost_per_hour":9098.24},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-04","labor_total":17066899,"cost_per_hour":9078.14},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-05","labor_total":16642917,"cost_per_hour":8857.33},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-06","labor_total":17251156,"cost_per_hour":9463.06},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-07","labor_total":18215995,"cost_per_hour":8995.55},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-08","labor_total":17818036,"cost_per_hour":9289.08},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-09","labor_total":17705272,"cost_per_hour":9622.43},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-10","labor_total":18669334,"cost_per_hour":9951.67},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-11","labor_total":18779351,"cost_per_hour":10295.7},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2025-12","labor_total":20937442,"cost_per_hour":10704.21},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2026-01","labor_total":20030081,"cost_per_hour":10694.12},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2026-02","labor_total":19531181,"cost_per_hour":11435.12},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2026-03","labor_total":20342596,"cost_per_hour":10614.45},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2026-04","labor_total":20547878,"cost_per_hour":11314.91},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2026-05","labor_total":20828735,"cost_per_hour":10882.31},{"client":"NUEVO PUERTO SANTA FE S.A","month":"2026-06","labor_total":21251184,"cost_per_hour":11734.5},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-01","labor_total":14230513,"cost_per_hour":7938.92},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-02","labor_total":14959831,"cost_per_hour":9346.97},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-03","labor_total":16827676,"cost_per_hour":9626.82},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-04","labor_total":16140095,"cost_per_hour":9391.97},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-05","labor_total":16584833,"cost_per_hour":9611.61},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-06","labor_total":16904386,"cost_per_hour":9879.83},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-07","labor_total":17514189,"cost_per_hour":9939.95},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-08","labor_total":17404583,"cost_per_hour":10048.84},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-09","labor_total":18026669,"cost_per_hour":10438.14},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-10","labor_total":19823092,"cost_per_hour":11196.32},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-11","labor_total":19059874,"cost_per_hour":11107.15},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2025-12","labor_total":20584510,"cost_per_hour":11769.3},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2026-01","labor_total":20064974,"cost_per_hour":11172.03},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2026-02","labor_total":19810119,"cost_per_hour":11770.72},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2026-03","labor_total":22630095,"cost_per_hour":11876.2},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2026-04","labor_total":21872396,"cost_per_hour":12064.2},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2026-05","labor_total":23590528,"cost_per_hour":12432.43},{"client":"DISTRIBUIDORA DE GAS DEL CENTRO S.A.","month":"2026-06","labor_total":24666255,"cost_per_hour":13225.87}];
+
+function getLaborCost(client, month) {
+  return laborCostData.find(r => r.client === client && r.month === month) || null;
+}
+
+const clients = ["CENCOSUD S.A.", "EMP. PROV. ENERGIA SANTA FE", "SOCIEDAD ADMINISTRADORA DE SIETE SOLES S.A", "EMBOTELLADORA DEL ATLANTICO S.A.", "IRSA INVERSIONES Y REPRESENTACIONES S.A.", "ARCOR SAIC", "BANCO MACRO SA", "SIPAR ACEROS S.A", "LIBERTAD S. A.", "BANCO DE LA PROVINCIA DE CORDOBA SA", "UNIVERSIDAD CATOLICA DE CORDOBA", "ARCOS DEL GOURMET S.A.", "LA GALLEGA SUPERMERCADOS S.A", "BANCO NACION ARGENTINA", "CONSORCIO DE PROPIETARIOS LOTEO JOCKEY CLUB CBA SO", "COMPLEJO R. EL PASO CONSORCIO", "SUPERMERCADOS MAYORISTAS MAKRO S.A", "TUBOS TRANS ELECTRIC SA", "DISTRIBUIDORA DE GAS CUYANA SA", "LITORAL GAS S.A.", "ASOCIACION CIVIL LAS TEJAS DEL SUR", "BAGLEY ARGENTINA S.A.", "EDIFICIO CAPITALINAS", "MERCOBEEF S.A", "CARTOCOR SOCIEDAD ANONIMA", "NUEVO PUERTO SANTA FE S.A", "DISTRIBUIDORA DE GAS DEL CENTRO S.A."];
+const months = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+
+const bajaMonths = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+const bajaMarginSeries = {
+  "LIBERTAD S. A.": [31.17,25.96,23.31,19.07,26.34,27.12,30.22,30.17,22.30,31.11,29.83,26.70,31.89,26.76,30.20,28.52,29.65],
+  "BANCO DE LA PROVINCIA DE CORDOBA SA": [26.17,23.02,19.04,18.21,19.01,15.78,28.48,23.92,23.60,null,null,null,null,null,null,null,null],
+  "UNIVERSIDAD CATOLICA DE CORDOBA": [40.03,36.35,35.91,36.05,38.94,34.74,40.98,40.08,37.42,38.03,37.72,34.63,37.34,32.09,null,null,null],
+  "PILAY SOCIEDAD ANONIMA": [31.55,30.25,33.30,30.66,31.20,24.36,28.81,29.90,29.14,28.02,26.91,28.29,31.34,26.73,34.29,28.08,null],
+  "LAS ALMENAS S.A.": [32.39,29.53,25.93,28.57,31.28,29.73,34.27,33.01,26.84,31.31,29.18,24.94,28.03,24.09,30.27,25.34,30.22],
+  "AGRICULTORES FEDERADOS ARGENTINOS S.C.L.": [36.51,37.88,32.19,32.80,34.15,33.73,35.34,32.46,31.12,31.75,30.58,33.59,37.82,null,null,null,null],
+  "CONSORCIO DE PROPIETARIOS TORRES SAN JOSE": [27.30,26.36,29.13,23.00,27.06,19.04,27.78,28.38,null,null,null,null,null,null,null,null,null],
+  "COOPERATIVA AGROPECUARIA GENERAL PAZ DE MARCOS JUAREZ LTDA.": [39.07,33.30,31.14,31.73,33.05,34.99,34.81,36.28,35.69,36.28,34.98,null,null,null,null,null,null],
+  "URBANIZACION ALTOS DE CARLOS PAZ SA": [21.93,40.67,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  "CONSORCIO EDIFICIO BETA XXIII": [34.89,32.61,31.14,31.98,25.72,26.39,34.50,34.72,null,null,null,null,null,null,null,null,null],
+  "CONSORCIO DE PROPIETARIOS DEL EDIFICIO LAS MELLIZAS PARK & TOWERS CAM": [36.11,31.60,33.98,30.30,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  "EXPRESO LUJAN DE CUYO SA": [45.58,33.74,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+  "ACCION MERCANTIL SA": [44.67,42.21,48.17,45.43,51.60,46.80,46.59,null,null,null,null,null,null,null,null,null,null]
+};
+const bajaPortfolioAverage = [30.63,28.26,25.26,24.05,26.90,24.30,32.13,30.26,27.79,34.57,31.85,30.40,34.23,28.99,27.71,24.85,29.69];
+const bajaImpactData = [
+  {client:"LIBERTAD S. A.",hours:11200,period:"2026-05",share:4.02},
+  {client:"BANCO DE LA PROVINCIA DE CORDOBA SA",hours:18000,period:"2025-09",share:4.78},
+  {client:"UNIVERSIDAD CATOLICA DE CORDOBA",hours:8000,period:"2026-02",share:3.62},
+  {client:"PILAY SOCIEDAD ANONIMA",hours:1230,period:"2026-04",share:0.41},
+  {client:"LAS ALMENAS S.A.",hours:730,period:"2026-06",share:0.24},
+  {client:"AGRICULTORES FEDERADOS ARGENTINOS S.C.L.",hours:1000,period:"2026-02",share:0.34},
+  {client:"CONSORCIO DE PROPIETARIOS TORRES SAN JOSE",hours:730,period:"2025-08",share:0.23},
+  {client:"COOPERATIVA AGROPECUARIA GENERAL PAZ DE MARCOS JUAREZ LTDA.",hours:474,period:"2025-12",share:0.14},
+  {client:"URBANIZACION ALTOS DE CARLOS PAZ SA",hours:2020,period:"2025-03",share:0.61},
+  {client:"CONSORCIO EDIFICIO BETA XXIII",hours:243,period:"2025-08",share:0.08},
+  {client:"CONSORCIO DE PROPIETARIOS DEL EDIFICIO LAS MELLIZAS PARK & TOWERS CAM",hours:416,period:"2025-04",share:0.12},
+  {client:"EXPRESO LUJAN DE CUYO SA",hours:209,period:"2025-05",share:0.06},
+  {client:"ACCION MERCANTIL SA",hours:42,period:"2025-07",share:0.01},
+  {client:"INSTITUTO DE AGROBIOTECNOLOGIA ROSARIO",hours:540,period:"2025-04",share:0.16},
+  {client:"SPEEDAGRO SRL",hours:730,period:"2025-07",share:0.23}
+];
+
+const paritariaData = [
+  {month:"2025-01",basic:56.61,presentism:11.57,additional:0.00,travel:31.82,nonRem:0.00,other:43.39},
+  {month:"2025-02",basic:54.95,presentism:11.07,additional:0.00,travel:31.91,nonRem:2.08,other:45.06},
+  {month:"2025-03",basic:55.20,presentism:11.00,additional:2.07,travel:31.73,nonRem:0.00,other:44.80},
+  {month:"2025-04",basic:54.29,presentism:10.74,additional:2.02,travel:32.96,nonRem:0.00,other:45.72},
+  {month:"2025-05",basic:53.85,presentism:11.63,additional:1.99,travel:32.53,nonRem:0.00,other:46.15},
+  {month:"2025-06",basic:53.85,presentism:11.63,additional:1.99,travel:32.53,nonRem:0.00,other:46.15},
+  {month:"2025-07",basic:54.81,presentism:11.30,additional:0.00,travel:32.05,nonRem:1.84,other:45.19},
+  {month:"2025-08",basic:53.75,presentism:10.98,additional:0.00,travel:31.69,nonRem:3.58,other:46.25},
+  {month:"2025-09",basic:57.31,presentism:10.89,additional:0.00,travel:31.81,nonRem:0.00,other:42.70},
+  {month:"2025-10",basic:56.34,presentism:11.00,additional:0.00,travel:32.66,nonRem:0.00,other:43.66},
+  {month:"2025-11",basic:56.59,presentism:10.94,additional:0.00,travel:32.47,nonRem:0.00,other:43.41},
+  {month:"2025-12",basic:55.87,presentism:10.70,additional:0.00,travel:31.76,nonRem:1.68,other:44.13},
+  {month:"2026-01",basic:57.20,presentism:10.88,additional:0.00,travel:31.25,nonRem:0.66,other:42.79},
+  {month:"2026-02",basic:56.89,presentism:10.72,additional:0.00,travel:30.77,nonRem:1.62,other:43.11},
+  {month:"2026-03",basic:57.14,presentism:10.65,additional:0.00,travel:30.60,nonRem:1.61,other:42.86},
+  {month:"2026-04",basic:57.13,presentism:10.55,additional:0.00,travel:30.72,nonRem:1.60,other:42.87},
+  {month:"2026-05",basic:56.96,presentism:10.41,additional:0.00,travel:30.73,nonRem:1.89,other:43.03},
+  {month:"2026-06",basic:55.43,presentism:10.03,additional:0.00,travel:30.28,nonRem:4.26,other:44.57},
+  {month:"2026-07",basic:58.67,presentism:10.55,additional:0.00,travel:29.62,nonRem:1.17,other:41.34},
+  {month:"2026-08",basic:58.48,presentism:10.32,additional:0.00,travel:29.49,nonRem:1.72,other:41.53},
+  {month:"2026-09",basic:57.91,presentism:10.05,additional:0.00,travel:29.25,nonRem:2.79,other:42.09},
+  {month:"2026-10",basic:57.64,presentism:9.85,additional:0.00,travel:29.23,nonRem:3.28,other:42.36},
+  {month:"2026-11",basic:57.35,presentism:9.66,additional:0.00,travel:29.24,nonRem:3.76,other:42.66},
+  {month:"2026-12",basic:56.22,presentism:9.33,additional:0.00,travel:28.24,nonRem:6.22,other:43.79}
+];
+
+const select = document.getElementById('clientSelect');
+const searchBox = document.getElementById('searchBox');
+const tableHead = document.querySelector('#heatmapTable thead');
+const tableBody = document.querySelector('#heatmapTable tbody');
+
+function fmt(v, dec=2) {
+  return v == null || !isFinite(v) ? '—' : v.toFixed(dec).replace('.', ',') + '%';
+}
+function formatMonth(m) {
+  const [y, mm] = m.split('-');
+  const names = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  return names[parseInt(mm,10)-1] + ' ' + String(y).slice(2);
+}
+function getClientSeries(client) {
+  return months.map(m => {
+    const row = rawData.find(r => r.client === client && r.month === m);
+    return row ? row.pct : null;
+  });
+}
+function colorForPct(p) {
+  if (p == null || !isFinite(p)) return '#f1f3f5';
+  if (p < 18) return '#f7b0b0';
+  if (p < 22) return '#f7d2a1';
+  if (p < 26) return '#f6e7a1';
+  if (p < 30) return '#cfe9b7';
+  if (p < 35) return '#a8ddb5';
+  return '#77c48b';
+}
+function drawLine(svgId, values, labels, color='#1f4e79') {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+  const vals = values.filter(v => v != null);
+  if (!vals.length) return;
+  const W=1200,H=560,L=72,R=24,T=40,B=130;
+  const dataMin = Math.min(...vals);
+  const dataMax = Math.max(...vals);
+
+  // Zoom más alejado y mayor aire inferior para que los meses entren completos.
+  const range = Math.max(dataMax - dataMin, 5);
+  const padding = Math.max(6, range * 0.45);
+
+  let ymin = Math.floor((dataMin - padding) / 5) * 5;
+  let ymax = Math.ceil((dataMax + padding) / 5) * 5;
+
+  // Garantiza una ventana mínima de 22 puntos porcentuales.
+  if (ymax - ymin < 22) {
+    const mid = (dataMin + dataMax) / 2;
+    ymin = Math.floor((mid - 11) / 5) * 5;
+    ymax = Math.ceil((mid + 11) / 5) * 5;
+  }
+
+  // Evitamos escalas negativas innecesarias para margen bruto.
+  ymin = Math.max(0, ymin);
+  const x = i => L + i * (W-L-R) / (labels.length-1);
+  const y = v => T + (ymax-v) * (H-T-B)/(ymax-ymin);
+  const NS='http://www.w3.org/2000/svg';
+  function el(tag, attrs, text) {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs||{}).forEach(([k,v]) => e.setAttribute(k, v));
+    if (text != null) e.textContent = text;
+    svg.appendChild(e);
+    return e;
+  }
+  for (let v=ymin; v<=ymax; v+=5) {
+    el('line', {x1:L,y1:y(v),x2:W-R,y2:y(v),stroke:'#d9e1ea','stroke-width':1});
+    el('text', {x:L-10,y:y(v)+4,'text-anchor':'end',fill:'#6c7a90','font-size':11}, v + '%');
+  }
+  labels.forEach((m,i) => {
+    el('text', {x:x(i),y:H-B+55,'text-anchor':'middle',fill:'#556b86','font-size':11,'font-weight':600}, formatMonth(m));
+  });
+  let d='', started=false;
+  values.forEach((v,i) => {
+    if (v == null) { started=false; return; }
+    d += (started ? ' L ' : ' M ') + x(i) + ' ' + y(v);
+    started = true;
+  });
+  el('path', {d, fill:'none', stroke:color, 'stroke-width':3, 'stroke-linecap':'round', 'stroke-linejoin':'round'});
+  values.forEach((v,i) => {
+    if (v == null) return;
+    const point = el('circle', {
+      cx:x(i), cy:y(v), r:5.2, fill:'#fff', stroke:color, 'stroke-width':2,
+      style:'cursor:pointer'
+    });
+    point.dataset.month = labels[i];
+    point.dataset.value = v;
+    point.addEventListener('mouseenter', showPointTooltip);
+    point.addEventListener('mousemove', movePointTooltip);
+    point.addEventListener('mouseleave', hidePointTooltip);
+  });
+}
+function showPointTooltip(evt) {
+  const tt = document.getElementById('chartTooltip');
+  const month = evt.currentTarget.dataset.month;
+  const value = Number(evt.currentTarget.dataset.value);
+  const client = evt.currentTarget.dataset.client || '';
+  tt.innerHTML = `${client ? `<div class="tt-month">${client}</div>` : ''}<div class="tt-month">${formatMonth(month)}</div><div>Margen: ${value.toFixed(2).replace('.', ',')}%</div>`;
+  tt.style.display = 'block';
+  movePointTooltip(evt);
+}
+function movePointTooltip(evt) {
+  const tt = document.getElementById('chartTooltip');
+  tt.style.left = (evt.clientX + 14) + 'px';
+  tt.style.top = (evt.clientY - 44) + 'px';
+}
+function hidePointTooltip() {
+  const tt = document.getElementById('chartTooltip');
+  tt.style.display = 'none';
+}
+
+function drawPortfolio() {
+  const avg = months.map(m => {
+    const vals = rawData.filter(r => r.month === m).map(r => r.pct);
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  });
+  drawLine('portfolioSvg', avg, months, '#f47c20');
+}
+function updateClientChart(client) {
+  const series = getClientSeries(client);
+  drawLine('lineSvg', series, months, '#1f4e79');
+  const vals = series.filter(v => v != null);
+  if (!vals.length) return;
+  const start = vals[0], end = vals[vals.length-1], delta = end-start;
+  document.getElementById('miniStart').textContent = fmt(start);
+  document.getElementById('miniEnd').textContent = fmt(end);
+  document.getElementById('miniDelta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2).replace('.', ',') + ' pp';
+}
+function buildRanking() {
+  const rows = [];
+  clients.forEach(c => {
+    const s = getClientSeries(c).filter(v => v != null);
+    if (s.length >= 2) rows.push({client:c, delta:s[s.length-1]-s[0], start:s[0], end:s[s.length-1]});
+  });
+  rows.sort((a,b)=>b.delta-a.delta);
+  const top = rows.slice(0,5);
+  const bottom = [...rows].sort((a,b)=>a.delta-b.delta).slice(0,5);
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  html += '<div><div style="font-weight:800;margin-bottom:8px;color:#1f9d55">Mejor desempeño</div>';
+  html += top.map((r,i)=>`<div class="ranking-item"><b>${i+1}. ${r.client}</b><br><span class="muted">${fmt(r.start)} → ${fmt(r.end)} · Variación: +${r.delta.toFixed(2).replace('.',',')} pp</span></div>`).join('');
+  html += '</div>';
+  html += '<div><div style="font-weight:800;margin-bottom:8px;color:#d64545">Mayor deterioro</div>';
+  html += bottom.map((r,i)=>`<div class="ranking-item"><b>${i+1}. ${r.client}</b><br><span class="muted">${fmt(r.start)} → ${fmt(r.end)} · Variación: ${r.delta.toFixed(2).replace('.',',')} pp</span></div>`).join('');
+  html += '</div></div>';
+  document.getElementById('variationRanking').innerHTML = html;
+}
+function buildHeatmap(filter='') {
+  if (!tableHead || !tableBody) return;
+  tableHead.innerHTML = `<tr><th>Cliente</th>${months.map(m => `<th>${formatMonth(m)}</th>`).join('')}</tr>`;
+  const filtered = clients.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
+  tableBody.innerHTML = filtered.map(c => {
+    const s = getClientSeries(c);
+    return `<tr><td>${c}</td>${s.map(v => `<td><span class="cell" style="background:${colorForPct(v)}">${v == null ? '—' : v.toFixed(1).replace('.',',') + '%'}</span></td>`).join('')}</tr>`;
+  }).join('');
+}
+
+function buildSmallMultiples() {
+  const container = document.getElementById('smallMultiples');
+  if (!container) return;
+  container.innerHTML = '';
+
+  clients.forEach((client, idx) => {
+    const series = getClientSeries(client);
+    const valid = series.map((v,i)=>({v,i})).filter(d=>d.v != null);
+    if (!valid.length) return;
+
+    const start = valid[0].v;
+    const end = valid[valid.length-1].v;
+    const delta = end - start;
+    const cls = delta > 0.25 ? 'sm-up' : (delta < -0.25 ? 'sm-down' : 'sm-flat');
+    const deltaCls = delta > 0.25 ? 'up' : (delta < -0.25 ? 'down' : 'flat');
+
+    const card = document.createElement('div');
+    card.className = 'sm-card ' + cls;
+
+    const sign = delta > 0 ? '+' : '';
+    card.innerHTML = `
+      <div class="sm-head">
+        <div class="sm-name">${client}</div>
+        <div class="sm-delta ${deltaCls}">${sign}${delta.toFixed(2).replace('.',',')} pp</div>
+      </div>
+      <svg class="sm-svg" viewBox="0 0 360 118" preserveAspectRatio="none"></svg>
+      <div class="sm-footer"><span>${formatMonth(months[valid[0].i])}: ${fmt(start)}</span><span>${formatMonth(months[valid[valid.length-1].i])}: ${fmt(end)}</span></div>
+    `;
+    container.appendChild(card);
+
+    const svg = card.querySelector('svg');
+    const W=360,H=118,L=8,R=8,T=10,B=10;
+    const vals = valid.map(d=>d.v);
+    let ymin = Math.floor((Math.min(...vals)-2)/5)*5;
+    let ymax = Math.ceil((Math.max(...vals)+2)/5)*5;
+    if (ymax-ymin < 10) { ymin -= 2.5; ymax += 2.5; }
+    const x = i => L + i*(W-L-R)/(months.length-1);
+    const y = v => T + (ymax-v)*(H-T-B)/(ymax-ymin);
+    const NS='http://www.w3.org/2000/svg';
+
+    function el(tag,attrs){
+      const e=document.createElementNS(NS,tag);
+      Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,v));
+      svg.appendChild(e);
+      return e;
+    }
+
+    // reference line at 25%
+    if (25 >= ymin && 25 <= ymax) {
+      el('line',{x1:L,y1:y(25),x2:W-R,y2:y(25),stroke:'#d8e4ef','stroke-width':'1','stroke-dasharray':'4 4'});
+    }
+
+    let d='', started=false;
+    series.forEach((v,i)=>{
+      if (v == null){ started=false; return; }
+      d += (started ? ' L ' : ' M ') + x(i) + ' ' + y(v);
+      started=true;
+    });
+
+    const lineColor = delta < -0.25 ? '#d95454' : (delta > 0.25 ? '#24945d' : '#3b6f9f');
+    el('path',{d,fill:'none',stroke:lineColor,'stroke-width':'2.4','stroke-linecap':'round','stroke-linejoin':'round'});
+
+    series.forEach((v,i)=>{
+      if (v == null) return;
+      const p = el('circle',{cx:x(i),cy:y(v),r:'3.3',fill:'#fff',stroke:lineColor,'stroke-width':'1.8',style:'cursor:pointer'});
+      p.dataset.month = months[i];
+      p.dataset.value = v;
+      p.addEventListener('mouseenter', showPointTooltip);
+      p.addEventListener('mousemove', movePointTooltip);
+      p.addEventListener('mouseleave', hidePointTooltip);
+    });
+  });
+}
+
+
+let combinedChartMode = 'delta';
+
+function buildCombinedClientsChart() {
+  const svg = document.getElementById('allClientsSvg');
+  const legend = document.getElementById('allClientsLegend');
+  if (!svg || !legend) return;
+
+  svg.innerHTML = '';
+  legend.innerHTML = '';
+
+  const W=1200,H=560,L=72,R=22,T=28,B=60;
+  const selected = document.getElementById('clientSelect')?.value || '';
+
+  // Build display series. In delta mode every client starts at 0 pp.
+  const displaySeries = {};
+  clients.forEach(client => {
+    const actual = getClientSeries(client);
+    const first = actual.find(v => v != null);
+    displaySeries[client] = actual.map(v => {
+      if (v == null) return null;
+      return combinedChartMode === 'delta' ? v - first : v;
+    });
+  });
+
+  const allVals = Object.values(displaySeries).flat().filter(v => v != null);
+  let ymin, ymax;
+
+  if (combinedChartMode === 'delta') {
+    const absMax = Math.max(5, Math.ceil(Math.max(...allVals.map(v => Math.abs(v))) / 5) * 5);
+    ymin = -absMax;
+    ymax = absMax;
+  } else {
+    ymin = Math.floor(Math.min(...allVals, 10) / 5) * 5;
+    ymax = Math.ceil(Math.max(...allVals, 45) / 5) * 5;
+    if (ymax - ymin < 20) ymax = ymin + 20;
+  }
+
+  const x = i => L + i*(W-L-R)/(months.length-1);
+  const y = v => T + (ymax-v)*(H-T-B)/(ymax-ymin);
+  const NS='http://www.w3.org/2000/svg';
+
+  function el(tag, attrs, text) {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs||{}).forEach(([k,v]) => e.setAttribute(k, v));
+    if (text != null) e.textContent = text;
+    svg.appendChild(e);
+    return e;
+  }
+
+  // UX bands: improvement above zero, deterioration below zero.
+  if (combinedChartMode === 'delta') {
+    el('rect', {x:L,y:T,width:W-L-R,height:y(0)-T,fill:'#eef9f2'});
+    el('rect', {x:L,y:y(0),width:W-L-R,height:H-B-y(0),fill:'#fff2f2'});
+    el('text', {x:L+8,y:T+18,fill:'#24945d','font-size':12,'font-weight':700}, 'MEJORA');
+    el('text', {x:L+8,y:H-B-10,fill:'#d95454','font-size':12,'font-weight':700}, 'DETERIORO');
+  }
+
+  // Grid
+  const step = combinedChartMode === 'delta'
+    ? (Math.max(5, Math.ceil((ymax-ymin)/8/5)*5))
+    : 5;
+
+  for (let v=ymin; v<=ymax+0.001; v+=step) {
+    const isZero = combinedChartMode === 'delta' && Math.abs(v) < 0.001;
+    el('line', {
+      x1:L,y1:y(v),x2:W-R,y2:y(v),
+      stroke:isZero ? '#52677e' : '#d9e1ea',
+      'stroke-width':isZero ? 2 : 1
+    });
+    const lab = combinedChartMode === 'delta'
+      ? ((v>0?'+':'') + v.toFixed(0) + ' pp')
+      : (v.toFixed(0) + '%');
+    el('text', {x:L-10,y:y(v)+4,'text-anchor':'end',fill:'#6c7a90','font-size':11}, lab);
+  }
+
+  // Month axis
+  months.forEach((m,i) => {
+    el('text', {x:x(i), y:H-18, 'text-anchor':'middle', fill:'#6c7a90', 'font-size':10}, formatMonth(m));
+  });
+
+  // Trend-based colors make direction obvious.
+  clients.forEach((client, idx) => {
+    const actual = getClientSeries(client);
+    const validActual = actual.filter(v => v != null);
+    if (!validActual.length) return;
+
+    const delta = validActual[validActual.length-1] - validActual[0];
+    const trendColor = delta > 0.5 ? '#24945d' : (delta < -0.5 ? '#d95454' : '#718398');
+    const series = displaySeries[client];
+
+    let d='', started=false;
+    series.forEach((v,i) => {
+      if (v == null) { started=false; return; }
+      d += (started ? ' L ' : ' M ') + x(i) + ' ' + y(v);
+      started = true;
+    });
+
+    const isSelected = client === selected;
+    const stroke = isSelected ? '#173a63' : trendColor;
+    const opacity = isSelected ? 1 : 0.40;
+    const strokeWidth = isSelected ? 4.2 : 1.9;
+
+    el('path', {
+      d, fill:'none', stroke, 'stroke-width':strokeWidth,
+      'stroke-linecap':'round', 'stroke-linejoin':'round', opacity
+    });
+
+    series.forEach((v,i) => {
+      if (v == null) return;
+      const actualValue = actual[i];
+      const p = el('circle', {
+        cx:x(i), cy:y(v),
+        r:isSelected ? '5.1' : '3.2',
+        fill:'#fff', stroke,
+        'stroke-width':isSelected ? '2.4' : '1.5',
+        opacity:isSelected ? '1' : '0.70',
+        style:'cursor:pointer'
+      });
+      p.dataset.month = months[i];
+      p.dataset.value = actualValue;
+      p.dataset.client = client;
+      p.addEventListener('mouseenter', showPointTooltip);
+      p.addEventListener('mousemove', movePointTooltip);
+      p.addEventListener('mouseleave', hidePointTooltip);
+    });
+
+    // Larger end marker helps reading the direction.
+    const lastIdx = series.map((v,i)=>v==null?null:i).filter(v=>v!=null).pop();
+    if (lastIdx != null) {
+      el('circle', {
+        cx:x(lastIdx), cy:y(series[lastIdx]),
+        r:isSelected ? '6.4' : '4.3',
+        fill:stroke, stroke:'#fff','stroke-width':'1.5',
+        opacity:isSelected ? '1' : '0.9'
+      });
+    }
+
+    const legendItem = document.createElement('div');
+    legendItem.className = 'legend-item';
+    const arrow = delta > 0.5 ? '▲' : (delta < -0.5 ? '▼' : '●');
+    const deltaText = (delta >= 0 ? '+' : '') + delta.toFixed(2).replace('.', ',') + ' pp';
+    legendItem.innerHTML = `
+      <span class="legend-swatch" style="background:${trendColor}"></span>
+      <span><b>${arrow} ${client}</b> <span style="color:${trendColor};font-weight:800">(${deltaText})</span></span>
+    `;
+    legend.appendChild(legendItem);
+  });
+
+  legend.className = 'legend-grid';
+}
+
+
+function buildDeltaOverview() {
+  const svg = document.getElementById('deltaOverviewSvg');
+  const summary = document.getElementById('trendSummary');
+  if (!svg || !summary) return;
+
+  svg.innerHTML = '';
+
+  const rows = clients.map(client => {
+    const series = getClientSeries(client);
+    const valid = series.map((v,i)=>({v,i})).filter(d => d.v != null);
+    if (!valid.length) return null;
+    const first = valid[0];
+    const last = valid[valid.length-1];
+    return {
+      client,
+      start:first.v,
+      end:last.v,
+      startMonth:months[first.i],
+      endMonth:months[last.i],
+      delta:last.v-first.v
+    };
+  }).filter(Boolean).sort((a,b)=>a.delta-b.delta);
+
+  const down = rows.filter(r=>r.delta < -0.5).length;
+  const up = rows.filter(r=>r.delta > 0.5).length;
+  const flat = rows.length-down-up;
+
+  summary.innerHTML = `
+    <span class="summary-chip down">▼ Deterioran: ${down}</span>
+    <span class="summary-chip up">▲ Mejoran: ${up}</span>
+    <span class="summary-chip flat">● Estables: ${flat}</span>
+  `;
+
+  const W=1200,H=1000,L=345,R=80,T=55,B=35;
+  const rowH=(H-T-B)/rows.length;
+
+  const minDelta=Math.min(...rows.map(r=>r.delta), -1);
+  const maxDelta=Math.max(...rows.map(r=>r.delta), 1);
+
+  // If practically all values are on one side, use more width for that side.
+  let domainMin, domainMax;
+  if (maxDelta <= 1) {
+    domainMin = Math.floor((minDelta-2)/5)*5;
+    domainMax = 2;
+  } else if (minDelta >= -1) {
+    domainMin = -2;
+    domainMax = Math.ceil((maxDelta+2)/5)*5;
+  } else {
+    const abs=Math.ceil(Math.max(Math.abs(minDelta),Math.abs(maxDelta))/5)*5;
+    domainMin=-abs; domainMax=abs;
+  }
+
+  const x=v => L + (v-domainMin)*(W-L-R)/(domainMax-domainMin);
+  const x0=x(0);
+  const NS='http://www.w3.org/2000/svg';
+
+  function el(tag,attrs,text){
+    const e=document.createElementNS(NS,tag);
+    Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,v));
+    if(text!=null)e.textContent=text;
+    svg.appendChild(e);
+    return e;
+  }
+
+  // Background areas
+  if (x0 > L) el('rect',{x:L,y:T,width:x0-L,height:H-T-B,fill:'#fff5f5'});
+  if (x0 < W-R) el('rect',{x:x0,y:T,width:W-R-x0,height:H-T-B,fill:'#f2fbf6'});
+
+  // Axis ticks
+  const tickStep = 5;
+  const startTick=Math.ceil(domainMin/tickStep)*tickStep;
+  for(let v=startTick; v<=domainMax; v+=tickStep){
+    const xx=x(v);
+    el('line',{
+      x1:xx,y1:T-12,x2:xx,y2:H-B,
+      stroke:Math.abs(v)<0.001?'#536b82':'#e2e9f1',
+      'stroke-width':Math.abs(v)<0.001?2:1
+    });
+    el('text',{
+      x:xx,y:T-22,'text-anchor':'middle',
+      fill:'#6b7d91','font-size':11,'font-weight':Math.abs(v)<0.001?700:500
+    },(v>0?'+':'')+v+' pp');
+  }
+
+  el('text',{x:L,y:20,fill:'#c24a4a','font-size':12,'font-weight':800},'DETERIORO');
+  el('text',{x:W-R,y:20,'text-anchor':'end',fill:'#238455','font-size':12,'font-weight':800},'MEJORA');
+
+  rows.forEach((r,i)=>{
+    const cy=T+i*rowH+rowH/2;
+    const color=r.delta < -0.5 ? '#d95454' : (r.delta > 0.5 ? '#24945d' : '#718398');
+    const barH=Math.min(20,rowH*0.55);
+    const xEnd=x(r.delta);
+    const bx=Math.min(x0,xEnd);
+    const bw=Math.max(2,Math.abs(xEnd-x0));
+
+    // Client label
+    const label=el('text',{
+      x:L-14,y:cy+4,'text-anchor':'end',
+      fill:'#263b55','font-size':11.5,'font-weight':700,
+      style:'cursor:pointer'
+    },r.client);
+    label.dataset.client=r.client;
+
+    // Bar
+    const rect=el('rect',{
+      x:bx,y:cy-barH/2,width:bw,height:barH,rx:5,
+      fill:color,opacity:0.88,style:'cursor:pointer'
+    });
+
+    // Delta value at bar end
+    const deltaLabel=(r.delta>=0?'+':'')+r.delta.toFixed(2).replace('.',',')+' pp';
+    const textX=r.delta<0 ? xEnd-7 : xEnd+7;
+    const anchor=r.delta<0 ? 'end' : 'start';
+    el('text',{
+      x:textX,y:cy+4,'text-anchor':anchor,
+      fill:color,'font-size':11.5,'font-weight':800
+    },deltaLabel);
+
+    // tooltip data
+    [rect,label].forEach(node=>{
+      node.dataset.client=r.client;
+      node.dataset.start=r.start;
+      node.dataset.end=r.end;
+      node.dataset.startMonth=r.startMonth;
+      node.dataset.endMonth=r.endMonth;
+      node.dataset.delta=r.delta;
+
+      node.addEventListener('mouseenter', showDeltaBarTooltip);
+      node.addEventListener('mousemove', movePointTooltip);
+      node.addEventListener('mouseleave', hidePointTooltip);
+      node.addEventListener('click', ()=>{
+        const sel=document.getElementById('clientSelect');
+        sel.value=r.client;
+        updateClientChart(r.client);
+        const line=document.getElementById('lineSvg');
+        if(line) line.closest('.card')?.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+    });
+  });
+}
+
+function showDeltaBarTooltip(evt){
+  const tt=document.getElementById('chartTooltip');
+  const d=evt.currentTarget.dataset;
+  const delta=Number(d.delta);
+  tt.innerHTML=`
+    <div class="tt-month">${d.client}</div>
+    <div>${formatMonth(d.startMonth)}: ${Number(d.start).toFixed(2).replace('.',',')}%</div>
+    <div>${formatMonth(d.endMonth)}: ${Number(d.end).toFixed(2).replace('.',',')}%</div>
+    <div style="margin-top:3px;font-weight:800">${delta>=0?'+':''}${delta.toFixed(2).replace('.',',')} pp</div>
+  `;
+  tt.style.display='block';
+  movePointTooltip(evt);
+}
+
+
+
+function laborFormatMoney(value, decimals=0){
+  return new Intl.NumberFormat('es-AR',{
+    style:'currency',currency:'ARS',minimumFractionDigits:decimals,maximumFractionDigits:decimals
+  }).format(value);
+}
+
+function laborMonthLabel(month){
+  const [y,m]=month.split('-').map(Number);
+  const names=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${names[m-1]} ${y}`;
+}
+
+
+function laborCompactAxis(value, metric){
+  if(metric==='labor_total'){
+    if(Math.abs(value)>=1000000000) return '$ '+(value/1000000000).toFixed(1).replace('.',',')+' mil M';
+    if(Math.abs(value)>=1000000) return '$ '+Math.round(value/1000000)+' M';
+    if(Math.abs(value)>=1000) return '$ '+Math.round(value/1000)+' mil';
+    return '$ '+Math.round(value);
+  }
+  return '$ '+new Intl.NumberFormat('es-AR',{maximumFractionDigits:0}).format(value);
+}
+
+function getLaborClientSeries(client, metric){
+  const laborMonths=[...new Set(laborCostData.map(r=>r.month))].sort();
+  return {
+    months:laborMonths,
+    values:laborMonths.map(month=>{
+      const row=laborCostData.find(r=>r.client===client && r.month===month);
+      if(!row) return null;
+      const v=row[metric];
+      return v==null || !isFinite(v) ? null : Number(v);
+    })
+  };
+}
+
+function drawLaborLine(client, metric){
+  const svg=document.getElementById('laborLineSvg');
+  if(!svg) return;
+  svg.innerHTML='';
+  const {months:lMonths,values}=getLaborClientSeries(client,metric);
+  const valid=values.filter(v=>v!=null && isFinite(v));
+  if(!valid.length) return;
+
+  const W=1200,H=560,L=105,R=28,T=38,B=130;
+  const minV=Math.min(...valid), maxV=Math.max(...valid);
+  const rawRange=Math.max(maxV-minV, Math.abs(maxV)*0.08, 1);
+  let ymin=Math.max(0,minV-rawRange*0.25);
+  let ymax=maxV+rawRange*0.25;
+  if(ymax<=ymin) ymax=ymin+1;
+
+  const x=i=>L+i*(W-L-R)/Math.max(1,lMonths.length-1);
+  const y=v=>T+(ymax-v)*(H-T-B)/(ymax-ymin);
+  const NS='http://www.w3.org/2000/svg';
+  function add(tag,attrs,text){
+    const e=document.createElementNS(NS,tag);
+    Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,v));
+    if(text!=null)e.textContent=text;
+    svg.appendChild(e);
+    return e;
+  }
+
+  const ticks=5;
+  for(let i=0;i<=ticks;i++){
+    const v=ymin+(ymax-ymin)*i/ticks;
+    const yy=y(v);
+    add('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#d9e1ea','stroke-width':1});
+    add('text',{x:L-12,y:yy+4,'text-anchor':'end',fill:'#6c7a90','font-size':11},laborCompactAxis(v,metric));
+  }
+
+  lMonths.forEach((m,i)=>{
+    add('text',{x:x(i),y:H-B+55,'text-anchor':'middle',fill:'#556b86','font-size':11,'font-weight':600},formatMonth(m));
+  });
+
+  let d='',started=false;
+  values.forEach((v,i)=>{
+    if(v==null){started=false;return;}
+    d+=(started?' L ':' M ')+x(i)+' '+y(v);
+    started=true;
+  });
+  add('path',{d,fill:'none',stroke:'#1f4e79','stroke-width':3,'stroke-linecap':'round','stroke-linejoin':'round'});
+
+  values.forEach((v,i)=>{
+    if(v==null)return;
+    const point=add('circle',{cx:x(i),cy:y(v),r:5.2,fill:'#fff',stroke:'#1f4e79','stroke-width':2,style:'cursor:pointer'});
+    point.dataset.month=lMonths[i];
+    point.dataset.value=v;
+    point.dataset.metric=metric;
+    point.dataset.client=client;
+    point.addEventListener('mouseenter',showLaborPointTooltip);
+    point.addEventListener('mousemove',movePointTooltip);
+    point.addEventListener('mouseleave',hidePointTooltip);
+  });
+
+  const validPairs=values.map((v,i)=>({v,i})).filter(d=>d.v!=null && isFinite(d.v));
+  const first=validPairs[0].v,last=validPairs[validPairs.length-1].v;
+  const delta=first!==0 ? (last/first-1)*100 : null;
+  const dec=metric==='labor_total'?0:2;
+  document.getElementById('laborMiniStart').textContent=laborFormatMoney(first,dec);
+  document.getElementById('laborMiniEnd').textContent=laborFormatMoney(last,dec);
+  document.getElementById('laborMiniDelta').textContent=delta==null?'—':(delta>=0?'+':'')+delta.toFixed(1).replace('.',',')+'%';
+}
+
+function showLaborPointTooltip(evt){
+  const tt=document.getElementById('chartTooltip');
+  const d=evt.currentTarget.dataset;
+  const value=Number(d.value);
+  const metric=d.metric;
+  const label=metric==='labor_total'?'Costo laboral total':'Costo por HS';
+  const dec=metric==='labor_total'?0:2;
+  tt.innerHTML=`<div class="tt-month">${d.client}</div><div class="tt-month">${formatMonth(d.month)}</div><div>${label}: ${laborFormatMoney(value,dec)}</div>`;
+  tt.style.display='block';
+  movePointTooltip(evt);
+}
+
+function updateLaborClientChart(){
+  const clientSelect=document.getElementById('laborClientSelect');
+  const metricSelect=document.getElementById('laborMetricSelect');
+  if(!clientSelect||!metricSelect)return;
+  drawLaborLine(clientSelect.value,metricSelect.value);
+}
+
+function initLaborEvolution(){
+  const clientSelect=document.getElementById('laborClientSelect');
+  const metricSelect=document.getElementById('laborMetricSelect');
+  if(!clientSelect||!metricSelect)return;
+  const laborClients=[...new Set(laborCostData.map(r=>r.client))].sort((a,b)=>a.localeCompare(b,'es'));
+  clientSelect.innerHTML=laborClients.map(c=>`<option value="${c}">${c}</option>`).join('');
+  clientSelect.value=laborClients.includes('CENCOSUD S.A.')?'CENCOSUD S.A.':laborClients[0];
+  metricSelect.value='labor_total';
+  updateLaborClientChart();
+  clientSelect.addEventListener('change',updateLaborClientChart);
+  metricSelect.addEventListener('change',updateLaborClientChart);
+}
+
+function drawLaborAverageHour(){
+  const svg=document.getElementById('laborAverageHourSvg');
+  if(!svg)return;
+  svg.innerHTML='';
+  const lMonths=[...new Set(laborCostData.map(r=>r.month))].sort();
+  const points=lMonths.map(month=>{
+    const rows=laborCostData.filter(r=>r.month===month && r.cost_per_hour!=null && isFinite(r.cost_per_hour));
+    return {month,count:rows.length,value:rows.length?rows.reduce((s,r)=>s+Number(r.cost_per_hour),0)/rows.length:null};
+  });
+  const valid=points.filter(p=>p.value!=null);
+  if(!valid.length)return;
+
+  const W=1200,H=560,L=105,R=28,T=38,B=130;
+  const minV=Math.min(...valid.map(p=>p.value)),maxV=Math.max(...valid.map(p=>p.value));
+  const range=Math.max(maxV-minV,maxV*.08,1);
+  const ymin=Math.max(0,minV-range*.3),ymax=maxV+range*.3;
+  const x=i=>L+i*(W-L-R)/Math.max(1,lMonths.length-1);
+  const y=v=>T+(ymax-v)*(H-T-B)/(ymax-ymin);
+  const NS='http://www.w3.org/2000/svg';
+  function add(tag,attrs,text){
+    const e=document.createElementNS(NS,tag);
+    Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,v));
+    if(text!=null)e.textContent=text;
+    svg.appendChild(e);
+    return e;
+  }
+  for(let i=0;i<=5;i++){
+    const v=ymin+(ymax-ymin)*i/5,yy=y(v);
+    add('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#d9e1ea','stroke-width':1});
+    add('text',{x:L-12,y:yy+4,'text-anchor':'end',fill:'#6c7a90','font-size':11},laborCompactAxis(v,'cost_per_hour'));
+  }
+  lMonths.forEach((m,i)=>add('text',{x:x(i),y:H-B+55,'text-anchor':'middle',fill:'#556b86','font-size':11,'font-weight':600},formatMonth(m)));
+  const d=points.map((p,i)=>p.value==null?null:`${i===0?'M':'L'} ${x(i)} ${y(p.value)}`).filter(Boolean).join(' ');
+  add('path',{d,fill:'none',stroke:'#f47c20','stroke-width':3,'stroke-linecap':'round','stroke-linejoin':'round'});
+  points.forEach((p,i)=>{
+    if(p.value==null)return;
+    const c=add('circle',{cx:x(i),cy:y(p.value),r:5.2,fill:'#fff',stroke:'#f47c20','stroke-width':2,style:'cursor:pointer'});
+    c.addEventListener('mouseenter',evt=>{
+      const tt=document.getElementById('chartTooltip');
+      tt.innerHTML=`<div class="tt-month">${formatMonth(p.month)}</div><div>Promedio por HS: ${laborFormatMoney(p.value,2)}</div><div style="margin-top:3px;color:#c7d3df">Clientes incluidos: ${p.count}</div>`;
+      tt.style.display='block';
+      movePointTooltip(evt);
+    });
+    c.addEventListener('mousemove',movePointTooltip);
+    c.addEventListener('mouseleave',hidePointTooltip);
+  });
+  const start=valid[0].value,end=valid[valid.length-1].value,delta=start?(end/start-1)*100:null;
+  document.getElementById('laborAvgStart').textContent=laborFormatMoney(start,2);
+  document.getElementById('laborAvgEnd').textContent=laborFormatMoney(end,2);
+  document.getElementById('laborAvgDelta').textContent=delta==null?'—':`${delta>=0?'+':''}${delta.toFixed(1).replace('.',',')}%`;
+}
+
+function buildBajaImpact(){
+  const tbody=document.querySelector('#bajaImpactTable tbody');
+  if(!tbody)return;
+  const maxShare=Math.max(...bajaImpactData.map(r=>r.share));
+  tbody.innerHTML=[...bajaImpactData].sort((a,b)=>b.share-a.share).map(r=>`
+    <tr>
+      <td>${r.client}</td>
+      <td class="num">${new Intl.NumberFormat('es-AR').format(r.hours)}</td>
+      <td class="num">${formatMonth(r.period)}</td>
+      <td class="num"><div class="impact-cell"><div class="impact-bar-track"><div class="impact-bar" style="width:${(r.share/maxShare*100).toFixed(1)}%"></div></div><div class="impact-value">${r.share.toFixed(2).replace('.',',')}%</div></div></td>
+    </tr>`).join('');
+  const totalHours=bajaImpactData.reduce((s,r)=>s+r.hours,0);
+  const maxRow=bajaImpactData.reduce((a,b)=>b.share>a.share?b:a);
+  document.getElementById('bajaClientsKpi').textContent=bajaImpactData.length;
+  document.getElementById('bajaHoursKpi').textContent=new Intl.NumberFormat('es-AR').format(totalHours);
+  document.getElementById('bajaMaxImpactKpi').textContent=maxRow.share.toFixed(2).replace('.',',')+'%';
+  document.getElementById('bajaMaxImpactClient').textContent=maxRow.client+' · '+formatMonth(maxRow.period);
+}
+
+function buildBajaHeatmap(){
+  const thead=document.querySelector('#bajaHeatmapTable thead');
+  const tbody=document.querySelector('#bajaHeatmapTable tbody');
+  if(!thead||!tbody)return;
+  thead.innerHTML=`<tr><th>Cliente</th>${bajaMonths.map(m=>`<th>${formatMonth(m)}</th>`).join('')}</tr>`;
+  const rows=Object.entries(bajaMarginSeries).map(([client,values])=>`
+    <tr><td>${client}</td>${values.map(v=>`<td><span class="cell" style="background:${colorForPct(v)}">${v==null?'—':v.toFixed(1).replace('.',',')+'%'}</span></td>`).join('')}</tr>`).join('');
+  const total=`<tr class="total-row"><td>Total general</td>${bajaPortfolioAverage.map(v=>`<td><span class="cell">${v.toFixed(2).replace('.',',')}%</span></td>`).join('')}</tr>`;
+  tbody.innerHTML=rows+total;
+}
+
+function initBajaClients(){
+  buildBajaImpact();
+  buildBajaHeatmap();
+  drawLine('bajaAverageSvg',bajaPortfolioAverage,bajaMonths,'#f47c20');
+}
+
+function renderLaborCost(month){
+  const rows=laborCostData.filter(r=>r.month===month);
+  const tbody=document.querySelector('#laborTable tbody');
+  if(!tbody) return;
+
+  tbody.innerHTML=rows.map(r=>`
+    <tr>
+      <td>${r.client}</td>
+      <td class="labor-money">${laborFormatMoney(r.labor_total,0)}</td>
+      <td class="labor-hour">${r.cost_per_hour==null ? '—' : laborFormatMoney(r.cost_per_hour,2)}</td>
+    </tr>
+  `).join('');
+
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:24px">Sin datos para el mes seleccionado.</td></tr>';
+    return;
+  }
+
+  const total=rows.reduce((s,r)=>s+r.labor_total,0);
+  // Para el promedio por hora se usan únicamente filas que tienen costo por hora informado.
+  const validHourRows=rows.filter(r=>r.cost_per_hour!=null && r.cost_per_hour>0 && r.labor_total>0);
+  const validTotal=validHourRows.reduce((s,r)=>s+r.labor_total,0);
+  const totalHours=validHourRows.reduce((s,r)=>s+(r.labor_total/r.cost_per_hour),0);
+  const weightedHour=totalHours ? validTotal/totalHours : null;
+  const maxRow=validHourRows.length ? validHourRows.reduce((a,b)=>b.cost_per_hour>a.cost_per_hour?b:a) : null;
+  const minRow=validHourRows.length ? validHourRows.reduce((a,b)=>b.cost_per_hour<a.cost_per_hour?b:a) : null;
+
+  document.getElementById('laborTotalKpi').textContent=laborFormatMoney(total,0);
+  document.getElementById('laborAvgHourKpi').textContent=weightedHour==null ? '—' : laborFormatMoney(weightedHour,2);
+  document.getElementById('laborMaxHourKpi').textContent=maxRow ? laborFormatMoney(maxRow.cost_per_hour,2) : '—';
+  document.getElementById('laborMaxHourClient').textContent=maxRow ? maxRow.client : 'Sin dato';
+  document.getElementById('laborMinHourKpi').textContent=minRow ? laborFormatMoney(minRow.cost_per_hour,2) : '—';
+  document.getElementById('laborMinHourClient').textContent=minRow ? minRow.client : 'Sin dato';
+}
+
+function initLaborCost(){
+  const monthSelect=document.getElementById('laborMonthSelect');
+  if(!monthSelect) return;
+  const months=[...new Set(laborCostData.map(r=>r.month))].sort();
+  monthSelect.innerHTML=months.map(m=>`<option value="${m}">${laborMonthLabel(m)}</option>`).join('');
+  if(months.length){
+    monthSelect.value=months[months.length-1];
+    renderLaborCost(monthSelect.value);
+  }
+  monthSelect.addEventListener('change',()=>renderLaborCost(monthSelect.value));
+}
+
+function paritariaPct(value){
+  return value==null?'—':value.toFixed(2).replace('.',',')+'%';
+}
+
+function paritariaAverages(year){
+  const rows=paritariaData.filter(r=>r.month.startsWith(String(year)));
+  const keys=['basic','presentism','additional','travel','nonRem'];
+  return Object.fromEntries(keys.map(key=>[key,rows.reduce((s,r)=>s+r[key],0)/rows.length]));
+}
+
+function buildParitariaShifts(){
+  const container=document.getElementById('paritariaShifts');
+  if(!container)return;
+  const a25=paritariaAverages(2025),a26=paritariaAverages(2026);
+  const items=[
+    ['Básico','basic'],['Presentismo','presentism'],['Adic. rem.','additional'],['Viáticos','travel'],['Suma no rem.','nonRem']
+  ];
+  container.innerHTML=items.map(([name,key])=>{
+    const d=a26[key]-a25[key];
+    return `<div class="paritaria-shift"><div class="name">${name}</div><div class="delta ${d>=0?'up':'down'}">${d>=0?'+':''}${d.toFixed(2).replace('.',',')} pp</div></div>`;
+  }).join('');
+}
+
+function buildParitariaTable(){
+  const tbody=document.querySelector('#paritariaTable tbody');
+  if(!tbody)return;
+  tbody.innerHTML=paritariaData.map((r,i)=>{
+    const delta=i===0?null:r.basic-paritariaData[i-1].basic;
+    const deltaText=delta==null?'—':`${delta>=0?'+':''}${delta.toFixed(2).replace('.',',')} pp`;
+    const deltaClass=delta==null?'':(delta>=0?'delta-up':'delta-down');
+    return `<tr class="${r.month==='2026-01'?'year-start':''}">
+      <td>${formatMonth(r.month)}</td>
+      <td class="basic-cell">${paritariaPct(r.basic)}</td>
+      <td class="${deltaClass}">${deltaText}</td>
+      <td>${paritariaPct(r.presentism)}</td>
+      <td>${paritariaPct(r.additional)}</td>
+      <td>${paritariaPct(r.travel)}</td>
+      <td>${paritariaPct(r.nonRem)}</td>
+      <td>${paritariaPct(r.other)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function drawParitariaChart(){
+  const svg=document.getElementById('paritariaBasicSvg');
+  if(!svg)return;
+  svg.innerHTML='';
+  const fullMonths=[];
+  for(const year of [2025,2026])for(let month=1;month<=12;month++)fullMonths.push(`${year}-${String(month).padStart(2,'0')}`);
+  const rows=fullMonths.map(month=>paritariaData.find(r=>r.month===month)||null);
+  const W=1200,H=590,L=75,R=34,T=58,B=125,ymin=52,ymax=60;
+  const step=(W-L-R)/fullMonths.length;
+  const x=i=>L+step*(i+.5);
+  const y=v=>T+(ymax-v)*(H-T-B)/(ymax-ymin);
+  const NS='http://www.w3.org/2000/svg';
+  function add(tag,attrs,text){
+    const e=document.createElementNS(NS,tag);
+    Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,v));
+    if(text!=null)e.textContent=text;
+    svg.appendChild(e);return e;
+  }
+  add('rect',{x:L,y:T,width:step*12,height:H-T-B,fill:'#f6f9fc'});
+  add('rect',{x:L+step*12,y:T,width:step*12,height:H-T-B,fill:'#fffaf0'});
+  add('text',{x:L+step*6,y:26,'text-anchor':'middle',fill:'#718399','font-size':12,'font-weight':900},'2025');
+  add('text',{x:L+step*18,y:26,'text-anchor':'middle',fill:'#a56c16','font-size':12,'font-weight':900},'2026');
+  for(let v=ymin;v<=ymax;v+=2){
+    const yy=y(v);
+    add('line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:'#dbe5ee','stroke-width':1});
+    add('text',{x:L-12,y:yy+4,'text-anchor':'end',fill:'#6c7f94','font-size':11},v+'%');
+  }
+  const avg25=paritariaAverages(2025).basic,avg26=paritariaAverages(2026).basic;
+  [[avg25,0,12,'#6e879d'],[avg26,12,24,'#c07a12']].forEach(([avg,a,b,color])=>{
+    add('line',{x1:L+step*a,y1:y(avg),x2:L+step*b,y2:y(avg),stroke:color,'stroke-width':2,'stroke-dasharray':'7 5',opacity:.8});
+    add('text',{x:L+step*b-5,y:y(avg)-7,'text-anchor':'end',fill:color,'font-size':10.5,'font-weight':900},`PROM. ${avg.toFixed(2).replace('.',',')}%`);
+  });
+  rows.forEach((r,i)=>{
+    const xx=x(i);
+    add('line',{x1:xx,y1:T,x2:xx,y2:H-B,stroke:'#edf2f6','stroke-width':1});
+    const label=add('text',{x:xx,y:H-B+23,'text-anchor':'end',transform:`rotate(-48 ${xx} ${H-B+23})`,fill:r?'#536a82':'#a9b5c1','font-size':10,'font-weight':r?700:500},formatMonth(fullMonths[i]));
+    if(!r){
+      add('text',{x:xx,y:H-B-10,'text-anchor':'middle',fill:'#aab6c1','font-size':8.5,'font-weight':800},'SIN DATO');
+      return;
+    }
+    add('rect',{x:xx-step*.29,y:y(r.basic),width:step*.58,height:y(ymin)-y(r.basic),rx:5,fill:'#f2c85b',opacity:.34});
+  });
+  let d='',started=false;
+  rows.forEach((r,i)=>{
+    if(!r){started=false;return;}
+    d+=(started?' L ':' M ')+x(i)+' '+y(r.basic);started=true;
+  });
+  add('path',{d,fill:'none',stroke:'#c07a12','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round'});
+  rows.forEach((r,i)=>{
+    if(!r)return;
+    const point=add('circle',{cx:x(i),cy:y(r.basic),r:5,fill:'#fff',stroke:'#c07a12','stroke-width':2.5,style:'cursor:pointer'});
+    point.addEventListener('mouseenter',evt=>{
+      const tt=document.getElementById('chartTooltip');
+      tt.innerHTML=`<div class="tt-month">${formatMonth(r.month)}</div><div style="font-size:15px;font-weight:900;color:#ffd37a">Básico: ${paritariaPct(r.basic)}</div><div>Otros conceptos: ${paritariaPct(r.other)}</div><div style="margin-top:5px;color:#cbd8e4">Presentismo ${paritariaPct(r.presentism)} · Viáticos ${paritariaPct(r.travel)} · No rem. ${paritariaPct(r.nonRem)}</div>`;
+      tt.style.display='block';movePointTooltip(evt);
+    });
+    point.addEventListener('mousemove',movePointTooltip);
+    point.addEventListener('mouseleave',hidePointTooltip);
+  });
+  const minRow=paritariaData.reduce((a,b)=>b.basic<a.basic?b:a),maxRow=paritariaData.reduce((a,b)=>b.basic>a.basic?b:a);
+  [minRow,maxRow].forEach((r,index)=>{
+    const i=fullMonths.indexOf(r.month),yy=y(r.basic);
+    add('text',{x:x(i),y:yy+(index===0?24:-14),'text-anchor':'middle',fill:index===0?'#4f7899':'#a8640b','font-size':11.5,'font-weight':900},`${index===0?'MÍN.':'MÁX.'} ${paritariaPct(r.basic)}`);
+  });
+}
+
+function initParitariaAnalysis(){
+  buildParitariaShifts();
+  buildParitariaTable();
+  drawParitariaChart();
+}
+
+function init() {
+  select.innerHTML = clients.map(c => `<option value="${c}">${c}</option>`).join('');
+  select.value = 'CENCOSUD S.A.';
+  drawPortfolio();
+  updateClientChart(select.value);
+  buildHeatmap();
+  buildRanking();
+  buildDeltaOverview();
+  initLaborCost();
+  initLaborEvolution();
+  drawLaborAverageHour();
+  initBajaClients();
+  initParitariaAnalysis();
+  select.addEventListener('change', ()=>{ updateClientChart(select.value); });
+  if (searchBox) {
+    searchBox.addEventListener('input', () => {
+      const q = (searchBox.value || '').toLowerCase();
+      const options = Array.from(select.options);
+      const match = options.find(o => o.text.toLowerCase().includes(q));
+      if (match && q.length >= 2) {
+        select.value = match.value;
+        updateClientChart(select.value);
+      }
+    });
+  }
+}
+init();
+</script>
+<div class="chart-tooltip" id="chartTooltip"></div>
+</body>
+</html>
